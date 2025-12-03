@@ -29,8 +29,12 @@ public final class CustomMeteoritesPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (meteoriteSpawner != null && meteoriteSpawner.getGenerator() != null) {
-            meteoriteSpawner.getGenerator().cancelCleanupTasks(); // Вызов метода отмены задач
+        // Используем геттер из meteoriteSpawner
+        if (meteoriteSpawner != null) {
+            MeteoriteGenerator generator = meteoriteSpawner.getGenerator(); // Используем геттер
+            if (generator != null) {
+                generator.cancelCleanupTasks(); // Вызов метода отмены задач
+            }
         }
         getLogger().info("Плагин CustomMeteorites выключен!");
     }
