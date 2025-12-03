@@ -4,6 +4,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.yourname.custommeteorites.commands.MeteorCommand;
 import ru.yourname.custommeteorites.config.ConfigManager;
 import ru.yourname.custommeteorites.spawner.MeteoriteSpawner;
+// Добавлен импорт
+import ru.yourname.custommeteorites.generator.MeteoriteGenerator;
 
 public final class CustomMeteoritesPlugin extends JavaPlugin {
 
@@ -32,7 +34,7 @@ public final class CustomMeteoritesPlugin extends JavaPlugin {
         // Используем геттер из meteoriteSpawner
         if (meteoriteSpawner != null) {
             // Убедитесь, что getGenerator() возвращает MeteoriteGenerator
-            MeteoriteGenerator generator = meteoriteSpawner.getGenerator();
+            MeteoriteGenerator generator = meteoriteSpawner.getGenerator(); // Теперь компилятор знает, что это за тип
             if (generator != null) {
                 generator.cancelCleanupTasks(); // Вызов метода отмены задач
             }
