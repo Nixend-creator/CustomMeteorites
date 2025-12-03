@@ -32,21 +32,30 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Этот токен автоматически доступен
+      uses: actions/github-script@v7
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false # true, если хотите создать черновик
-        prerelease: false # true, если это предварительный релиз
+        script: |
+          const fs = require('fs');
+          const tagName = context.ref.replace('refs/tags/', '');
+          const releaseName = `Release ${tagName}`;
+          const releaseBody = `Automated release for ${tagName}`;
+          const release = await github.rest.repos.createRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: tagName,
+            name: releaseName,
+            body: releaseBody,
+            draft: false,
+            prerelease: false
+          });
+          return release.data.id;
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{ steps.create_release.outputs.result.upload_url }}
         asset_path: ${{ env.JAR_FILE }}
-        asset_name: CustomMeteorites.jar # Имя файла в релизе
+        asset_name: CustomMeteorites-${{ github.ref_name }}.jar # Имя файла в релизе, включая тег
         asset_content_type: application/java-archive
