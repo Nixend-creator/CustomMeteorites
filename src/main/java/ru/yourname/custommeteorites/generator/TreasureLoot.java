@@ -7,77 +7,53 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class TreasureLoot {
 
-    public static void fillChest(Inventory inventory, Map<String, Object> lootTable) {
+    public static void fillChest(Inventory inventory, org.bukkit.configuration.ConfigurationSection lootTable) {
         Random random = new Random();
 
-        for (Map.Entry<String, Object> entry : lootTable.entrySet()) {
-            Map<String, Object> lootEntry = (Map<String, Object>) entry.getValue();
-            if (!(Boolean) lootEntry.getOrDefault("enabled", true)) continue;
-            if (random.nextDouble() * 100 >= (Double) lootEntry.get("chance")) {
-                continue; // Не выпало
+        for (String key : lootTable.getKeys(false)) {
+            org.bukkit.configuration.ConfigurationSection lootEntry = lootTable.getConfigurationSection(key);
+            if (lootEntry == null || !lootEntry.getBoolean("enabled", true)) continue;
+            if (random.nextDouble() * 100 >= lootEntry.getDouble("chance")) {
+                continue;
             }
 
-            String materialName = (String) lootEntry.get("item-type");
+            String materialName = lootEntry.getString("item-type");
             Material material = Material.getMaterial(materialName);
             if (material == null) continue;
 
-            Object amountObj = lootEntry.get("amount");
-            int amount;
-            if (amountObj instanceof List) {
-                List<Integer> amountRange = (List<Integer>) amountObj;
-                amount = random.nextInt(amountRange.get(1) - amountRange.get(0) + 1) + amountRange.get(0);
-            } else {
-                amount = (Integer) amountObj;
-            }
+            int amount = lootEntry.getInt("amount", 1);
+            // Если amount - список, обработайте его здесь
 
             ItemStack item = new ItemStack(material, amount);
             ItemMeta meta = item.getItemMeta();
 
-            // Применение энчаров
-            Map<String, Object> enchants = (Map<String, Object>) lootEntry.get("enchants");
+            org.bukkit.configuration.ConfigurationSection enchants = lootEntry.getConfigurationSection("enchants");
             if (enchants != null) {
-                for (Map.Entry<String, Object> enchantEntry : enchants.entrySet()) {
-                    Enchantment enchant = Enchantment.getByName(enchantEntry.getKey());
-                    int level = (Integer) enchantEntry.getValue();
+                for (String enchantKey : enchants.getKeys(false)) {
+                    Enchantment enchant = Enchantment.getByName(enchantKey);
+                    int level = enchants.getInt(enchantKey);
                     if (enchant != null) {
                         meta.addEnchant(enchant, level, true);
                     }
                 }
             }
 
-            // Применение unbreakable
-            if ((Boolean) lootEntry.getOrDefault("unbreakable", false)) {
+            if (lootEntry.getBoolean("unbreakable", false)) {
                 meta.setUnbreakable(true);
                 meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
             }
 
-            // Применение display name и lore
-            String displayName = (String) lootEntry.get("display-name");
+            String displayName = lootEntry.getString("display-name");
             if (displayName != null) {
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName));
             }
-            List<String> lore = (List<String>) lootEntry.get("lore");
-            if (lore != null) {
+            List<String> lore = lootEntry.getStringList("lore");
+            if (!lore.isEmpty()) {
                 meta.setLore(lore.stream().map(s -> ChatColor.translateAlternateColorCodes('&', s)).toList());
-            }
-
-            // Custom Model Data
-            Integer customModelData = (Integer) lootEntry.get("custom-model-data");
-            if (customModelData != null && customModelData != 0) {
-                meta.setCustomModelData(customModelData);
-            }
-
-            // Damage (применяется к инструментам/оружию)
-            Integer damage = (Integer) lootEntry.get("damage");
-            if (damage != null && damage > 0 && meta instanceof org.bukkit.inventory.meta.Damageable damageableMeta) {
-                damageableMeta.setDamage(damage);
             }
 
             item.setItemMeta(meta);
