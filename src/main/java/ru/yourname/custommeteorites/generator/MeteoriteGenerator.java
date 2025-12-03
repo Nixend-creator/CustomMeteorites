@@ -170,7 +170,7 @@ public class MeteoriteGenerator {
             // Запускаем задачу для отслеживания одного FallingBlock
             // Исправлено: присваиваем результат BukkitTask переменной task (внешней по отношению к лямбде)
             // Исправлено: параметр лямбды переименован в particleEffectTask, чтобы избежать конфликта с внешней переменной task
-            BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, particleEffectTask -> { // Переименован параметр
+            BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, particleEffectTask -> {
                 if (fb.isDead()) {
                     particleEffectTask.cancel(); // Отменяем задачу particleEffectTask (внутренняя)
                     return;
