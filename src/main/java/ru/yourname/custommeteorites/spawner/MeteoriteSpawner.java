@@ -1,7 +1,8 @@
 package ru.yourname.custommeteorites.spawner;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3; // Добавлен импорт
+// import com.sk89q.worldedit.math.BlockVector3; // Не нужно, используем BukkitAdapter
+// import com.sk89q.worldedit.util.Location; // Не нужно, используем BukkitAdapter
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -128,8 +129,8 @@ public class MeteoriteSpawner {
             RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
             RegionManager regions = container.get(BukkitAdapter.adapt(world));
             if (regions != null) {
-                // Исправлено: используем BlockVector3 и toVector3()
-                BlockVector3 worldEditLoc = BukkitAdapter.adapt(location).toVector3().toBlockPoint();
+                // Исправлено: используем BukkitAdapter.asBlockVector
+                com.sk89q.worldedit.math.BlockVector3 worldEditLoc = BukkitAdapter.asBlockVector(location);
                 ApplicableRegionSet regionSet = regions.getApplicableRegions(worldEditLoc);
 
                 if (configManager.isProtectAllWorldGuardZones()) {
@@ -141,12 +142,12 @@ public class MeteoriteSpawner {
                     for (com.sk89q.worldguard.protection.regions.ProtectedRegion region : regionSet.getRegions()) {
                         if (safeZoneNames.contains(region.getId())) {
                             // Проверяем буфер - Исправлено: используем BlockVector3 и add()
-                            BlockVector3 bufferMin = worldEditLoc.add(
+                            com.sk89q.worldedit.math.BlockVector3 bufferMin = worldEditLoc.add(
                                 -configManager.getWorldGuardSafeZoneBuffer(),
                                 0,
                                 -configManager.getWorldGuardSafeZoneBuffer()
                             );
-                            BlockVector3 bufferMax = worldEditLoc.add(
+                            com.sk89q.worldedit.math.BlockVector3 bufferMax = worldEditLoc.add(
                                 configManager.getWorldGuardSafeZoneBuffer(),
                                 0,
                                 configManager.getWorldGuardSafeZoneBuffer()
