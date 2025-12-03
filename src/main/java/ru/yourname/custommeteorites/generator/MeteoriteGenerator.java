@@ -10,7 +10,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import ru.yourname.custommeteorites.config.ConfigManager;
@@ -22,7 +21,6 @@ public class MeteoriteGenerator {
 
     private final JavaPlugin plugin;
     private final ConfigManager configManager;
-    // Тип ключа Map — Integer (taskId)
     private final Map<Integer, BukkitTask> cleanupTasks = new HashMap<>();
 
     public MeteoriteGenerator(JavaPlugin plugin, ConfigManager configManager) {
@@ -30,18 +28,16 @@ public class MeteoriteGenerator {
         this.configManager = configManager;
     }
 
-    @SuppressWarnings("unchecked")
     public void createMeteoriteAt(Location spawnLocation, String meteoriteId) {
-        if (spawnLocation == null || spawnLocation.getWorld() == null) return;
-
-        Map<String, Object> meteoriteConfig = (Map<String, Object>) configManager.getMeteoritesConfig().get(meteoriteId);
-        if (meteoriteConfig == null) {
+        org.bukkit.configuration.ConfigurationSection meteoriteSection = configManager.getMeteoritesConfig().getConfigurationSection(meteoriteId);
+        if (meteoriteSection == null) {
             plugin.getLogger().severe("Конфигурация для метеорита " + meteoriteId + " не найдена!");
             return;
         }
+        Map<String, Object> meteoriteConfig = meteoriteSection.getValues(false);
 
         // Отправляем сообщение о появлении
-        String message = (String) meteoriteConfig.getOrDefault("chat-message", "&6[Метеориты]&f Метеорит был замечен!");
+        String message = meteoriteSection.getString("chat-message", "&6[Метеориты]&f Метеорит был замечен!");
         if (message != null && !message.isEmpty()) {
             message = message
                     .replace("%locationX%", String.valueOf(spawnLocation.getBlockX()))
@@ -50,7 +46,7 @@ public class MeteoriteGenerator {
         }
 
         // Выполняем команды при появлении
-        List<String> spawnCommands = (List<String>) meteoriteConfig.getOrDefault("meteorite-spawn-commands", Collections.emptyList());
+        List<String> spawnCommands = meteoriteSection.getStringList("meteorite-spawn-commands");
         for (String command : spawnCommands) {
             if (command != null && !command.isEmpty()) {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command
@@ -59,21 +55,19 @@ public class MeteoriteGenerator {
             }
         }
 
-        // Определяем центр метеорита (где упадет ядро)
         Location coreLocation = new Location(spawnLocation.getWorld(), spawnLocation.getX(), 0, spawnLocation.getZ());
         coreLocation.setY(spawnLocation.getWorld().getHighestBlockYAt(coreLocation));
 
-        // --- Генерация структуры метеорита ---
-        int outerSize = ((Number) meteoriteConfig.getOrDefault("outer-layer-size", 3)).intValue();
+        int outerSize = meteoriteSection.getInt("outer-layer-size", 3);
         int innerSize = 0;
-        if ((Boolean) meteoriteConfig.getOrDefault("enable-inner-layer", false)) {
-            innerSize = ((Number) meteoriteConfig.getOrDefault("inner-layer-size", 2)).intValue();
+        if (meteoriteSection.getBoolean("enable-inner-layer", false)) {
+            innerSize = meteoriteSection.getInt("inner-layer-size", 2);
         }
-        int coreSize = 1; // Размер ядра, можно сделать настраиваемым
+        int coreSize = 1;
 
-        Map<String, Object> coreBlocks = (Map<String, Object>) meteoriteConfig.get("core-block");
-        Map<String, Object> innerBlocks = (Map<String, Object>) meteoriteConfig.get("inner-layer-blocks");
-        Map<String, Object> outerBlocks = (Map<String, Object>) meteoriteConfig.get("outer-layer-blocks");
+        Map<String, Object> coreBlocks = (Map<String, Object>) meteoriteSection.getConfigurationSection("core-block").getValues(false);
+        Map<String, Object> innerBlocks = (Map<String, Object>) meteoriteSection.getConfigurationSection("inner-layer-blocks").getValues(false);
+        Map<String, Object> outerBlocks = (Map<String, Object>) meteoriteSection.getConfigurationSection("outer-layer-blocks").getValues(false);
 
         List<Location> corePositions = new ArrayList<>();
         List<Location> innerPositions = new ArrayList<>();
@@ -85,21 +79,24 @@ public class MeteoriteGenerator {
                     double distance = Math.sqrt(x * x + y * y + z * z);
                     Location blockLoc = coreLocation.clone().add(x, y, z);
                     if (blockLoc.getBlockY() > 0) {
-                        if (distance <= coreSize - 0.5) corePositions.add(blockLoc);
-                        else if (distance <= innerSize - 0.5) innerPositions.add(blockLoc);
-                        else if (distance <= outerSize - 0.5) outerPositions.add(blockLoc);
+                        if (distance <= coreSize - 0.5) {
+                            corePositions.add(blockLoc);
+                        } else if (distance <= innerSize - 0.5) {
+                            innerPositions.add(blockLoc);
+                        } else if (distance <= outerSize - 0.5) {
+                            outerPositions.add(blockLoc);
+                        }
                     }
                 }
             }
         }
 
-        // Создаем FallingBlock для каждого слоя
         List<FallingBlock> fallingBlocks = new ArrayList<>();
         fallingBlocks.addAll(createLayer(corePositions, coreBlocks, spawnLocation.getWorld()));
         fallingBlocks.addAll(createLayer(innerPositions, innerBlocks, spawnLocation.getWorld()));
         fallingBlocks.addAll(createLayer(outerPositions, outerBlocks, spawnLocation.getWorld()));
 
-        double speed = ((Number) meteoriteConfig.getOrDefault("meteorite-speed", 2.0)).doubleValue();
+        double speed = meteoriteSection.getDouble("meteorite-speed", 2.0);
         for (FallingBlock fb : fallingBlocks) {
             Vector velocity = new Vector(0, -speed, 0);
             velocity.add(new Vector((Math.random() - 0.5) * 0.5, 0, (Math.random() - 0.5) * 0.5));
@@ -107,32 +104,28 @@ public class MeteoriteGenerator {
             fb.setDropItem(false);
         }
 
-        // Частицы
         if (configManager.areParticlesEnabled()) {
-            Map<String, Object> particleEffects = configManager.getParticleEffects();
-            if (particleEffects == null) particleEffects = Collections.emptyMap();
-            startParticleEffect(fallingBlocks, particleEffects);
+            org.bukkit.configuration.ConfigurationSection particleEffects = configManager.getParticleEffects();
+            if (particleEffects != null) {
+                startParticleEffect(fallingBlocks, particleEffects.getValues(false));
+            }
         }
 
-        // Планируем обработку приземления
         scheduleImpactHandling(coreLocation, meteoriteConfig, fallingBlocks);
 
-        // Планируем очистку
-        int cleanupInterval = ((Number) meteoriteConfig.getOrDefault("clean-up-meteorite-blocks-interval", 0)).intValue();
-        if (cleanupInterval > 0) scheduleCleanup(coreLocation, outerSize, cleanupInterval);
+        int cleanupInterval = meteoriteSection.getInt("clean-up-meteorite-blocks-interval", 0);
+        if (cleanupInterval > 0) {
+            scheduleCleanup(coreLocation, outerSize, cleanupInterval);
+        }
     }
 
     private List<FallingBlock> createLayer(List<Location> positions, Map<String, Object> materialMap, World world) {
         List<FallingBlock> blocks = new ArrayList<>();
-        if (positions == null || positions.isEmpty()) return blocks;
-
         for (Location loc : positions) {
             Material material = getRandomMaterial(materialMap);
             if (material != null && material.isBlock()) {
                 BlockData blockData = material.createBlockData();
-                // spawn a little above to avoid clipping
-                Location spawn = loc.clone().add(0, 1, 0);
-                FallingBlock fb = world.spawnFallingBlock(spawn, blockData);
+                FallingBlock fb = world.spawnFallingBlock(loc, blockData);
                 blocks.add(fb);
             }
         }
@@ -155,97 +148,66 @@ public class MeteoriteGenerator {
         return materials.get(0);
     }
 
-    @SuppressWarnings("unchecked")
     private void startParticleEffect(List<FallingBlock> fallingBlocks, Map<String, Object> particleEffects) {
-        if (fallingBlocks == null || fallingBlocks.isEmpty()) return;
-
-        for (FallingBlock fb : new ArrayList<>(fallingBlocks)) {
-            // protect against null maps
-            Map<String, Object> effects = particleEffects == null ? Collections.emptyMap() : particleEffects;
-
-            BukkitTask task = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (fb == null || fb.isDead() || fb.isOnGround()) {
-                        cancel();
-                        return;
-                    }
-
-                    if (effects.isEmpty()) {
-                        // default particle
-                        fb.getWorld().spawnParticle(Particle.FLAME, fb.getLocation(), 2, 0.1, 0.1, 0.1, 0.02);
-                        return;
-                    }
-
-                    try {
-                        List<String> effectKeys = new ArrayList<>(effects.keySet());
-                        String randomEffectKey = effectKeys.get(new Random().nextInt(effectKeys.size()));
-                        Map<String, Object> effectData = (Map<String, Object>) effects.get(randomEffectKey);
-
-                        if (!(Boolean) effectData.getOrDefault("enabled", true)) return;
-                        if (Math.random() * 100 > ((Number) effectData.getOrDefault("chance", 100.0)).doubleValue()) return;
-
-                        String particleName = (String) effectData.getOrDefault("particle-effect", "FLAME");
-                        Particle particle = Particle.valueOf(particleName);
-                        int amount = ((Number) effectData.getOrDefault("amount", 1)).intValue();
-                        double spreadX = ((Number) effectData.getOrDefault("spreadX", effectData.getOrDefault("spread", 0.1))).doubleValue();
-                        double spreadY = ((Number) effectData.getOrDefault("spreadY", effectData.getOrDefault("spread", 0.1))).doubleValue();
-                        double spreadZ = ((Number) effectData.getOrDefault("spreadZ", effectData.getOrDefault("spread", 0.1))).doubleValue();
-                        double speed = ((Number) effectData.getOrDefault("speed", 0.05)).doubleValue();
-
-                        fb.getWorld().spawnParticle(particle, fb.getLocation(), amount, spreadX, spreadY, spreadZ, speed);
-                    } catch (Throwable t) {
-                        // don't spam console, but cancel if something goes wrong repeatedly
-                        cancel();
-                    }
+        for (FallingBlock fb : fallingBlocks) {
+            BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, particleEffectTask -> {
+                if (fb.isDead()) {
+                    particleEffectTask.cancel();
+                    return;
                 }
-            }.runTaskTimerAsynchronously(plugin, 0L, Math.max(1L, configManager.getParticleInterval()) * 2L);
+                List<String> effectKeys = new ArrayList<>(particleEffects.keySet());
+                String randomEffectKey = effectKeys.get(new Random().nextInt(effectKeys.size()));
+                Map<String, Object> effectData = (Map<String, Object>) particleEffects.get(randomEffectKey);
 
-            // we don't store these tasks in cleanupTasks (cleanupTasks used for block cleanup only)
+                if (!(Boolean) effectData.getOrDefault("enabled", true)) return;
+                if (Math.random() * 100 > (Double) effectData.getOrDefault("chance", 100.0)) return;
+
+                String particleName = (String) effectData.getOrDefault("particle-effect", "FLAME");
+                Particle particle = Particle.valueOf(particleName);
+                int amount = (Integer) effectData.getOrDefault("amount", 1);
+                double spreadX = (Double) effectData.getOrDefault("spread", 0.1);
+                double spreadY = (Double) effectData.getOrDefault("spread", 0.1);
+                double spreadZ = (Double) effectData.getOrDefault("spread", 0.1);
+                double speed = (Double) effectData.getOrDefault("speed", 0.05);
+
+                fb.getWorld().spawnParticle(particle, fb.getLocation(), amount, spreadX, spreadY, spreadZ, speed);
+            }, 0, configManager.getParticleInterval() * 2L);
         }
     }
 
     private void scheduleImpactHandling(Location coreLocation, Map<String, Object> meteoriteConfig, List<FallingBlock> fallingBlocks) {
-        // грубая оценка времени падения
         double spawnHeight = configManager.getSpawnHeight();
-        double fallSpeed = ((Number) meteoriteConfig.getOrDefault("meteorite-speed", 2.0)).doubleValue();
-        int estimatedFallTicks = (int) ((spawnHeight / Math.max(0.1, fallSpeed)) * 2) + 40;
+        double fallSpeed = (Double) meteoriteConfig.getOrDefault("meteorite-speed", 2.0);
+        int estimatedFallTicks = (int) (spawnHeight / fallSpeed) * 2 + 40;
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                handleImpact(coreLocation, meteoriteConfig);
-            }
-        }.runTaskLater(plugin, estimatedFallTicks);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> handleImpact(coreLocation, meteoriteConfig), estimatedFallTicks);
     }
 
-    @SuppressWarnings("unchecked")
     private void handleImpact(Location coreLocation, Map<String, Object> meteoriteConfig) {
         World world = coreLocation.getWorld();
-        if (world == null) return;
 
-        Map<String, Object> coreSettings = configManager.getCoreSettings();
-        if ((Boolean) coreSettings.getOrDefault("enable-explosion", true)) {
-            world.createExplosion(coreLocation, ((Number) coreSettings.getOrDefault("explosion-power", 6.0)).floatValue(),
-                    (Boolean) coreSettings.getOrDefault("explosion-breaks-blocks", true),
-                    (Boolean) coreSettings.getOrDefault("explosion-sets-fire", true));
+        org.bukkit.configuration.ConfigurationSection coreSettings = configManager.getCoreSettings();
+        if (coreSettings != null && coreSettings.getBoolean("enable-explosion", true)) {
+            world.createExplosion(coreLocation, (float) coreSettings.getDouble("explosion-power", 6.0),
+                    coreSettings.getBoolean("explosion-breaks-blocks", true),
+                    coreSettings.getBoolean("explosion-sets-fire", true));
         }
 
-        Map<String, Object> innerSettings = configManager.getInnerLayerSettings();
-        if ((Boolean) innerSettings.getOrDefault("enable-explosion", false)) {
-            world.createExplosion(coreLocation, ((Number) innerSettings.getOrDefault("explosion-power", 1.0)).floatValue(),
-                    (Boolean) innerSettings.getOrDefault("explosion-breaks-blocks", false),
-                    (Boolean) innerSettings.getOrDefault("explosion-sets-fire", true));
+        org.bukkit.configuration.ConfigurationSection innerSettings = configManager.getInnerLayerSettings();
+        if (innerSettings != null && innerSettings.getBoolean("enable-explosion", false)) {
+            world.createExplosion(coreLocation, (float) innerSettings.getDouble("explosion-power", 1.0),
+                    innerSettings.getBoolean("explosion-breaks-blocks", false),
+                    innerSettings.getBoolean("explosion-sets-fire", true));
         }
 
-        Map<String, Object> outerSettings = configManager.getOuterLayerSettings();
-        if ((Boolean) outerSettings.getOrDefault("enable-explosion", false)) {
-            world.createExplosion(coreLocation, ((Number) outerSettings.getOrDefault("explosion-power", 1.0)).floatValue(),
-                    (Boolean) outerSettings.getOrDefault("explosion-breaks-blocks", false),
-                    (Boolean) outerSettings.getOrDefault("explosion-sets-fire", true));
+        org.bukkit.configuration.ConfigurationSection outerSettings = configManager.getOuterLayerSettings();
+        if (outerSettings != null && outerSettings.getBoolean("enable-explosion", false)) {
+            world.createExplosion(coreLocation, (float) outerSettings.getDouble("explosion-power", 1.0),
+                    outerSettings.getBoolean("explosion-breaks-blocks", false),
+                    outerSettings.getBoolean("explosion-sets-fire", true));
         }
 
-        if ((Boolean) configManager.getCoreSettings().getOrDefault("enable-lighting-strike", true)) {
+        if (coreSettings != null && coreSettings.getBoolean("enable-lighting-strike", true)) {
             world.strikeLightningEffect(coreLocation);
         }
 
@@ -267,40 +229,31 @@ public class MeteoriteGenerator {
             spawnGuardian(coreLocation);
         }
 
-        String impactMessage = (String) configManager.getCoreSettings().getOrDefault("message", "");
+        String impactMessage = coreSettings != null ? coreSettings.getString("message", "") : "";
         if (impactMessage != null && !impactMessage.isEmpty()) {
             Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', impactMessage));
         }
-        List<String> impactCommands = (List<String>) configManager.getCoreSettings().getOrDefault("commands", Collections.emptyList());
-        for (String command : impactCommands) {
-            if (command != null && !command.isEmpty()) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command
-                        .replace("%locationX%", String.valueOf(coreLocation.getBlockX()))
-                        .replace("%locationY%", String.valueOf(coreLocation.getBlockY()))
-                        .replace("%locationZ%", String.valueOf(coreLocation.getBlockZ())));
-            }
-        }
     }
 
-    @SuppressWarnings("unchecked")
     private void spawnGuardian(Location coreLocation) {
-        Map<String, Object> possibleGuardians = configManager.getPossibleGuardians();
+        org.bukkit.configuration.ConfigurationSection possibleGuardians = configManager.getPossibleGuardians();
+        if (possibleGuardians == null) return;
+
         List<String> enabledGuardians = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : possibleGuardians.entrySet()) {
-            if (entry.getValue() instanceof Map) {
-                Map<String, Object> guardianData = (Map<String, Object>) entry.getValue();
-                if ((Boolean) guardianData.getOrDefault("enabled", false)) {
-                    enabledGuardians.add(entry.getKey());
-                }
+        for (String key : possibleGuardians.getKeys(false)) {
+            org.bukkit.configuration.ConfigurationSection guardianData = possibleGuardians.getConfigurationSection(key);
+            if (guardianData != null && guardianData.getBoolean("enabled", false)) {
+                enabledGuardians.add(key);
             }
         }
 
         if (enabledGuardians.isEmpty()) return;
 
         String selectedGuardianId = enabledGuardians.get(new Random().nextInt(enabledGuardians.size()));
-        Map<String, Object> guardianData = (Map<String, Object>) possibleGuardians.get(selectedGuardianId);
+        org.bukkit.configuration.ConfigurationSection guardianData = possibleGuardians.getConfigurationSection(selectedGuardianId);
 
-        if (Math.random() * 100 >= ((Number) guardianData.getOrDefault("chance", 10.0)).doubleValue()) return;
+        if (guardianData == null) return;
+        if (Math.random() * 100 >= guardianData.getDouble("chance", 10.0)) return;
 
         Location spawnLoc = coreLocation.clone().add(
                 (new Random().nextInt(3) - 1) * 2,
@@ -308,7 +261,7 @@ public class MeteoriteGenerator {
                 (new Random().nextInt(3) - 1) * 2
         );
 
-        EntityType entityType = EntityType.valueOf((String) guardianData.getOrDefault("guardian-mob-type", "ZOMBIE"));
+        EntityType entityType = EntityType.valueOf(guardianData.getString("guardian-mob-type", "ZOMBIE"));
         if (!entityType.isAlive()) {
             plugin.getLogger().warning("Неверный тип моба для охранника: " + entityType);
             return;
@@ -316,31 +269,31 @@ public class MeteoriteGenerator {
 
         LivingEntity guardian = (LivingEntity) coreLocation.getWorld().spawnEntity(spawnLoc, entityType);
 
-        String displayName = (String) guardianData.getOrDefault("guardian-display-name", "Охранник");
+        String displayName = guardianData.getString("guardian-display-name", "Охранник");
         guardian.setCustomName(ChatColor.translateAlternateColorCodes('&', displayName));
         guardian.setCustomNameVisible(true);
 
-        double health = ((Number) guardianData.getOrDefault("guardian-health", guardian.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue())).doubleValue();
-        guardian.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).setBaseValue(health);
-        guardian.setHealth(Math.min(guardian.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue(), health));
+        double health = guardianData.getDouble("guardian-health", guardian.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+        guardian.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(health);
+        guardian.setHealth((float) Math.min(health, guardian.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()));
 
-        double damage = ((Number) guardianData.getOrDefault("guardian-attack-damage", 5.0)).doubleValue();
-        guardian.getAttribute(org.bukkit.attribute.Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(damage);
+        double damage = guardianData.getDouble("guardian-attack-damage", 5.0);
+        guardian.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(damage);
 
-        double speed = ((Number) guardianData.getOrDefault("guardian-movement-speed", 0.25)).doubleValue();
-        guardian.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(speed);
+        double speed = guardianData.getDouble("guardian-movement-speed", 0.25);
+        guardian.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(speed);
 
-        if ((Boolean) guardianData.getOrDefault("enable-guardian-equipment", false)) {
-            Map<String, Object> equipment = (Map<String, Object>) guardianData.get("guardian-equipment");
+        if (guardianData.getBoolean("enable-guardian-equipment", false)) {
+            org.bukkit.configuration.ConfigurationSection equipment = guardianData.getConfigurationSection("guardian-equipment");
             if (equipment != null) {
                 org.bukkit.inventory.EntityEquipment equip = guardian.getEquipment();
                 if (equip != null) {
-                    equip.setItem(org.bukkit.inventory.EquipmentSlot.HAND, createItemStack((String) equipment.get("main-hand")));
-                    equip.setItem(org.bukkit.inventory.EquipmentSlot.OFF_HAND, createItemStack((String) equipment.get("off-hand")));
-                    equip.setItem(org.bukkit.inventory.EquipmentSlot.HEAD, createItemStack((String) equipment.get("helmet")));
-                    equip.setItem(org.bukkit.inventory.EquipmentSlot.CHEST, createItemStack((String) equipment.get("chestplate")));
-                    equip.setItem(org.bukkit.inventory.EquipmentSlot.LEGS, createItemStack((String) equipment.get("leggings")));
-                    equip.setItem(org.bukkit.inventory.EquipmentSlot.FEET, createItemStack((String) equipment.get("boots")));
+                    equip.setItem(EquipmentSlot.HAND, createItemStack(equipment.getString("main-hand")));
+                    equip.setItem(EquipmentSlot.OFF_HAND, createItemStack(equipment.getString("off-hand")));
+                    equip.setItem(EquipmentSlot.HEAD, createItemStack(equipment.getString("helmet")));
+                    equip.setItem(EquipmentSlot.CHEST, createItemStack(equipment.getString("chestplate")));
+                    equip.setItem(EquipmentSlot.LEGS, createItemStack(equipment.getString("leggings")));
+                    equip.setItem(EquipmentSlot.FEET, createItemStack(equipment.getString("boots")));
                     equip.setItemInMainHandDropChance(0F);
                     equip.setItemInOffHandDropChance(0F);
                     equip.setHelmetDropChance(0F);
@@ -351,7 +304,7 @@ public class MeteoriteGenerator {
             }
         }
 
-        String playerMessage = (String) guardianData.getOrDefault("player-message", "");
+        String playerMessage = guardianData.getString("player-message", "");
         if (!playerMessage.isEmpty()) {
             for (Player player : coreLocation.getWorld().getPlayers()) {
                 if (player.getLocation().distance(spawnLoc) < 10) {
@@ -360,11 +313,11 @@ public class MeteoriteGenerator {
             }
         }
 
-        String soundName = (String) guardianData.getOrDefault("guardian-spawn-sound", "");
+        String soundName = guardianData.getString("guardian-spawn-sound", "");
         if (!soundName.isEmpty()) {
-            float volume = ((Number) guardianData.getOrDefault("guardian-spawn-sound-volume", 1.0)).floatValue();
-            float pitch = ((Number) guardianData.getOrDefault("guardian-spawn-sound-pitch", 1.0)).floatValue();
-            coreLocation.getWorld().playSound(spawnLoc, soundName, volume, pitch);
+            float volume = (float) guardianData.getDouble("guardian-spawn-sound-volume", 1.0);
+            float pitch = (float) guardianData.getDouble("guardian-spawn-sound-pitch", 1.0);
+            coreLocation.getWorld().playSound(spawnLoc, Sound.valueOf(soundName.toUpperCase()), volume, pitch);
         }
     }
 
@@ -376,34 +329,31 @@ public class MeteoriteGenerator {
     }
 
     private void scheduleCleanup(Location coreLocation, int radius, int delaySeconds) {
-        BukkitTask cleanupTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (int x = -radius; x <= radius; x++) {
-                    for (int y = -radius; y <= radius; y++) {
-                        for (int z = -radius; z <= radius; z++) {
-                            Location blockLoc = coreLocation.clone().add(x, y, z);
-                            double distance = Math.sqrt(x * x + y * y + z * z);
-                            if (distance <= radius) {
-                                Block block = blockLoc.getBlock();
-                                if (block.getType() != Material.AIR) {
-                                    block.setType(Material.AIR);
-                                }
+        BukkitTask cleanupTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        Location blockLoc = coreLocation.clone().add(x, y, z);
+                        double distance = Math.sqrt(x * x + y * y + z * z);
+                        if (distance <= radius) {
+                            Block block = blockLoc.getBlock();
+                            if (block.getType() != Material.AIR) {
+                                block.setType(Material.AIR);
                             }
                         }
                     }
                 }
-                cleanupTasks.remove(this.getTaskId());
-                plugin.getLogger().info("Метеорит очищен по таймеру.");
             }
-        }.runTaskLater(plugin, Math.max(1L, delaySeconds) * 20L);
+            cleanupTasks.remove(cleanupTask.getTaskId());
+            plugin.getLogger().info("Метеорит очищен по таймеру.");
+        }, delaySeconds * 20L);
 
         cleanupTasks.put(cleanupTask.getTaskId(), cleanupTask);
     }
 
     public void cancelCleanupTasks() {
         for (BukkitTask task : cleanupTasks.values()) {
-            try { task.cancel(); } catch (Throwable ignored) {}
+            try { task.cancel(); } catch (Exception ignored) {}
         }
         cleanupTasks.clear();
     }
