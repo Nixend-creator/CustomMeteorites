@@ -1,8 +1,7 @@
 package ru.yourname.custommeteorites.spawner;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-// import com.sk89q.worldedit.math.BlockVector3; // Не нужно, используем BukkitAdapter
-// import com.sk89q.worldedit.util.Location; // Не нужно, используем BukkitAdapter
+import com.sk89q.worldedit.math.BlockVector3; // Добавлен импорт
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -130,7 +129,7 @@ public class MeteoriteSpawner {
             RegionManager regions = container.get(BukkitAdapter.adapt(world));
             if (regions != null) {
                 // Исправлено: используем BukkitAdapter.asBlockVector
-                com.sk89q.worldedit.math.BlockVector3 worldEditLoc = BukkitAdapter.asBlockVector(location);
+                BlockVector3 worldEditLoc = BukkitAdapter.asBlockVector(location);
                 ApplicableRegionSet regionSet = regions.getApplicableRegions(worldEditLoc);
 
                 if (configManager.isProtectAllWorldGuardZones()) {
@@ -142,12 +141,12 @@ public class MeteoriteSpawner {
                     for (com.sk89q.worldguard.protection.regions.ProtectedRegion region : regionSet.getRegions()) {
                         if (safeZoneNames.contains(region.getId())) {
                             // Проверяем буфер - Исправлено: используем BlockVector3 и add()
-                            com.sk89q.worldedit.math.BlockVector3 bufferMin = worldEditLoc.add(
+                            BlockVector3 bufferMin = worldEditLoc.add(
                                 -configManager.getWorldGuardSafeZoneBuffer(),
                                 0,
                                 -configManager.getWorldGuardSafeZoneBuffer()
                             );
-                            com.sk89q.worldedit.math.BlockVector3 bufferMax = worldEditLoc.add(
+                            BlockVector3 bufferMax = worldEditLoc.add(
                                 configManager.getWorldGuardSafeZoneBuffer(),
                                 0,
                                 configManager.getWorldGuardSafeZoneBuffer()
