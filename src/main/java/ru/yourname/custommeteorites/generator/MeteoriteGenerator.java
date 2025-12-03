@@ -21,7 +21,8 @@ public class MeteoriteGenerator {
 
     private final JavaPlugin plugin;
     private final ConfigManager configManager;
-    private final Map<UUID, BukkitTask> cleanupTasks = new HashMap<>(); // Для отслеживания задач очистки
+    // Исправлено: тип ключа Map с UUID на Integer
+    private final Map<Integer, BukkitTask> cleanupTasks = new HashMap<>();
 
     public MeteoriteGenerator(JavaPlugin plugin, ConfigManager configManager) {
         this.plugin = plugin;
@@ -39,8 +40,8 @@ public class MeteoriteGenerator {
         String message = (String) meteoriteConfig.getOrDefault("chat-message", "&6[Метеориты]&f Метеорит был замечен!");
         if (message != null && !message.isEmpty()) {
             message = message
-                    .replace("%x%", String.valueOf(spawnLocation.getBlockX()))
-                    .replace("%z%", String.valueOf(spawnLocation.getBlockZ()));
+                    .replace("%locationX%", String.valueOf(spawnLocation.getBlockX())) // Исправлено: используем locationX
+                    .replace("%locationZ%", String.valueOf(spawnLocation.getBlockZ())); // Исправлено: используем locationZ
             Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', message));
         }
 
@@ -167,6 +168,7 @@ public class MeteoriteGenerator {
     private void startParticleEffect(List<FallingBlock> fallingBlocks, Map<String, Object> particleEffects) {
         for (FallingBlock fb : fallingBlocks) {
             // Запускаем задачу для отслеживания одного FallingBlock
+            // Исправлено: присваиваем результат BukkitTask переменной task
             BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, particleTask -> {
                 if (fb.isDead()) {
                     particleTask.cancel();
@@ -393,11 +395,13 @@ public class MeteoriteGenerator {
                 }
             }
             // Удаляем задачу из списка после выполнения
+            // Исправлено: используем getTaskId() для Integer ключа
             cleanupTasks.remove(cleanupTask.getTaskId());
             plugin.getLogger().info("Метеорит очищен по таймеру.");
         }, delaySeconds * 20L);
 
         // Сохраняем задачу, чтобы можно было отменить при выгрузке плагина
+        // Исправлено: используем getTaskId() для Integer ключа
         cleanupTasks.put(cleanupTask.getTaskId(), cleanupTask);
     }
 
