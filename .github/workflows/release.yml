@@ -1,12 +1,12 @@
 name: Build and Release
 
 permissions:
-  contents: write
+  contents: write # Необходимо для создания релизов
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # Запускается при пуше тега, начинающегося с 'v'
 
 jobs:
   build:
@@ -24,8 +24,25 @@ jobs:
       - name: Build with Maven
         run: mvn -B package --file pom.xml
 
+      # --- НОВЫЙ ШАГ: Получение имени JAR-файла ---
+      - name: Get JAR file name
+        id: get_jar
+        run: |
+          # Найти JAR-файл в папке target, исключая тестовые JARы
+          JAR_FILE=$(find target -name "*.jar" ! -name "*-tests.jar" ! -name "*-sources.jar" -type f | head -n 1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "ERROR: JAR file not found in target directory."
+            exit 1
+          fi
+          # Выводим имя файла в лог для отладки
+          echo "Found JAR: $JAR_FILE"
+          # Устанавливаем переменную окружения
+          echo "JAR_FILE_PATH=$JAR_FILE" >> $GITHUB_ENV
+      # ------------------------------
+
       - name: Create Release
         uses: actions/github-script@v7
+        id: create_release # Добавляем id для получения upload_url
         with:
           script: |
             const tagName = context.ref.replace('refs/tags/', '');
@@ -36,5 +53,18 @@ jobs:
               name: `Release ${tagName}`,
               body: `Automated release for ${tagName}`,
             });
-            core.setOutput('release_id', release.data.id);
+            // Выводим URL для загрузки в.outputs.upload_url
+            core.setOutput('upload_url', release.data.upload_url);
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- НОВЫЙ ШАГ: Загрузка JAR в релиз ---
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # Используем URL из предыдущего шага
+          asset_path: ${{ env.JAR_FILE_PATH }} # Используем путь к JAR из предыдущего шага
+          asset_name: CustomMeteorites-${{ github.ref_name }}.jar # Имя файла в релизе, включая тег
+          asset_content_type: application/java-archive
+      # ------------------------------
