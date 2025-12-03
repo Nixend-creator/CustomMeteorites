@@ -27,7 +27,10 @@
                     <!-- Используем release вместо source/target -->
                     <release>21</release>
                     <!-- Опционально: если нужен доступ к внутренним API JDK -->
-                    <!-- <compilerArgs>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</compilerArgs> -->
+                    <!-- <compilerArgs>
+                        <arg>--add-exports</arg>
+                        <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+                    </compilerArgs> -->
                 </configuration>
             </plugin>
             <plugin>
