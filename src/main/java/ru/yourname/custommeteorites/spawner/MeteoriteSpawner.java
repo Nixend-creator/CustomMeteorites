@@ -1,7 +1,7 @@
 package ru.yourname.custommeteorites.spawner;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3; // Добавлен импорт
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -11,23 +11,21 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.yourname.custommeteorites.config.ConfigManager;
-import ru.yourname.custommeteorites.generator.MeteoriteGenerator; // Убедитесь, что импорт правильный
+import ru.yourname.custommeteorites.generator.MeteoriteGenerator;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class MeteoriteSpawner {
 
     private final JavaPlugin plugin;
     private final ConfigManager configManager;
-    private final MeteoriteGenerator generator; // Убедитесь, что тип правильный
+    private final MeteoriteGenerator generator;
     private final Random random = new Random();
 
     public MeteoriteSpawner(JavaPlugin plugin, ConfigManager configManager) {
         this.plugin = plugin;
         this.configManager = configManager;
-        this.generator = new MeteoriteGenerator(plugin, configManager); // Убедитесь, что конструктор существует
+        this.generator = new MeteoriteGenerator(plugin, configManager);
     }
 
     public void startScheduler() {
@@ -35,8 +33,7 @@ public class MeteoriteSpawner {
             plugin.getLogger().info("Метеориты отключены в конфиге.");
             return;
         }
-        // Используем интервал из конфига
-        Bukkit.getScheduler().runTaskTimer(plugin, this::spawnRandomMeteorite, 0, configManager.getInterval() * 20L); // 20 тиков = 1 секунда
+        Bukkit.getScheduler().runTaskTimer(plugin, this::spawnRandomMeteorite, 0, configManager.getInterval() * 20L);
     }
 
     private void spawnRandomMeteorite() {
@@ -47,10 +44,8 @@ public class MeteoriteSpawner {
             return;
         }
 
-        // Попытаться найти точку в заданном регионе
         Location spawnLocation = findSafeSpawnLocation(world);
         if (spawnLocation != null) {
-            // Выбрать тип метеорита на основе шансов
             String selectedMeteoriteId = selectMeteoriteType();
             generator.createMeteoriteAt(spawnLocation, selectedMeteoriteId);
         } else {
@@ -59,33 +54,42 @@ public class MeteoriteSpawner {
     }
 
     private String selectMeteoriteType() {
-        Map<String, Object> meteoritesConfig = configManager.getMeteoritesConfig();
+        org.bukkit.configuration.ConfigurationSection meteoritesSection = configManager.getMeteoritesConfig();
+        if (meteoritesSection == null || meteoritesSection.getKeys(false).isEmpty()) {
+            plugin.getLogger().warning("Нет доступных типов метеоритов в конфигурации!");
+            return "1"; // Fallback
+        }
+
         int totalWeight = 0;
-        for (Object obj : meteoritesConfig.values()) {
-            if (obj instanceof Map) {
-                Map<String, Object> meteoriteData = (Map<String, Object>) obj;
-                totalWeight += (Integer) meteoriteData.getOrDefault("chance", 1);
+        for (String key : meteoritesSection.getKeys(false)) {
+            org.bukkit.configuration.ConfigurationSection meteoriteData = meteoritesSection.getConfigurationSection(key);
+            if (meteoriteData != null) {
+                totalWeight += meteoriteData.getInt("chance", 1);
             }
+        }
+
+        if (totalWeight <= 0) {
+            plugin.getLogger().warning("Суммарный шанс всех метеоритов <= 0. Используется fallback.");
+            return "1"; // Fallback
         }
 
         int randomValue = random.nextInt(totalWeight);
         int currentWeight = 0;
-        for (Map.Entry<String, Object> entry : meteoritesConfig.entrySet()) {
-            if (entry.getValue() instanceof Map) {
-                Map<String, Object> meteoriteData = (Map<String, Object>) entry.getValue();
-                currentWeight += (Integer) meteoriteData.getOrDefault("chance", 1);
+        for (String key : meteoritesSection.getKeys(false)) {
+            org.bukkit.configuration.ConfigurationSection meteoriteData = meteoritesSection.getConfigurationSection(key);
+            if (meteoriteData != null) {
+                currentWeight += meteoriteData.getInt("chance", 1);
                 if (randomValue < currentWeight) {
-                    return entry.getKey();
+                    return key;
                 }
             }
         }
-        // Fallback на первый
-        return meteoritesConfig.keySet().iterator().next();
+        return meteoritesSection.getKeys(false).iterator().next();
     }
 
     private Location findSafeSpawnLocation(World world) {
         int attempts = 0;
-        final int maxAttempts = 20; // Увеличим попытки
+        final int maxAttempts = 20;
 
         int minX = configManager.getMinSpawnX();
         int maxX = configManager.getMaxSpawnX();
@@ -103,57 +107,52 @@ public class MeteoriteSpawner {
             }
             attempts++;
         }
-        return null; // Не нашли подходящую точку
+        return null;
     }
 
     private boolean isLocationSafe(Location location) {
         World world = location.getWorld();
         if (world == null) return false;
 
-        // 1. Проверка минимального расстояния от игроков
         for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
-            if (player.getWorld().equals(world) && player.getLocation().distance(location) < 100) { // Используем фиксированное значение или из конфига
+            if (player.getWorld().equals(world) && player.getLocation().distance(location) < 100) {
                 return false;
             }
         }
 
-        // 2. Проверка минимального расстояния от спавна
         Location spawnLocation = world.getSpawnLocation();
-        if (location.distance(spawnLocation) < 500) { // Используем фиксированное значение или из конфига
+        if (location.distance(spawnLocation) < 500) {
             return false;
         }
 
-        // 3. Проверка WorldGuard
         if (configManager.isWorldGuardIntegrationEnabled()) {
             RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
             RegionManager regions = container.get(BukkitAdapter.adapt(world));
             if (regions != null) {
-                // Исправлено: используем BukkitAdapter.asBlockVector
                 BlockVector3 worldEditLoc = BukkitAdapter.asBlockVector(location);
                 ApplicableRegionSet regionSet = regions.getApplicableRegions(worldEditLoc);
 
                 if (configManager.isProtectAllWorldGuardZones()) {
                     if (!regionSet.getRegions().isEmpty()) {
-                        return false; // Защитить все регионы
+                        return false;
                     }
                 } else {
                     List<String> safeZoneNames = configManager.getWorldGuardSafeZoneNames();
                     for (com.sk89q.worldguard.protection.regions.ProtectedRegion region : regionSet.getRegions()) {
                         if (safeZoneNames.contains(region.getId())) {
-                            // Проверяем буфер - Исправлено: используем BlockVector3 и add()
                             BlockVector3 bufferMin = worldEditLoc.add(
-                                -configManager.getWorldGuardSafeZoneBuffer(),
-                                0,
-                                -configManager.getWorldGuardSafeZoneBuffer()
+                                    -configManager.getWorldGuardSafeZoneBuffer(),
+                                    0,
+                                    -configManager.getWorldGuardSafeZoneBuffer()
                             );
                             BlockVector3 bufferMax = worldEditLoc.add(
-                                configManager.getWorldGuardSafeZoneBuffer(),
-                                0,
-                                configManager.getWorldGuardSafeZoneBuffer()
+                                    configManager.getWorldGuardSafeZoneBuffer(),
+                                    0,
+                                    configManager.getWorldGuardSafeZoneBuffer()
                             );
 
                             if (region.contains(bufferMin) && region.contains(bufferMax)) {
-                                return false; // Точка внутри буфера защищённой зоны
+                                return false;
                             }
                         }
                     }
@@ -164,7 +163,6 @@ public class MeteoriteSpawner {
         return true;
     }
 
-    // Геттер для generator
     public MeteoriteGenerator getGenerator() {
         return generator;
     }
