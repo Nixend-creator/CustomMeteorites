@@ -31,7 +31,8 @@ public final class CustomMeteoritesPlugin extends JavaPlugin {
     public void onDisable() {
         // Используем геттер из meteoriteSpawner
         if (meteoriteSpawner != null) {
-            MeteoriteGenerator generator = meteoriteSpawner.getGenerator(); // Используем геттер
+            // Убедитесь, что getGenerator() возвращает MeteoriteGenerator
+            MeteoriteGenerator generator = meteoriteSpawner.getGenerator();
             if (generator != null) {
                 generator.cancelCleanupTasks(); // Вызов метода отмены задач
             }
