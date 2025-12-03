@@ -165,38 +165,36 @@ public class MeteoriteGenerator {
         return materials.get(0);
     }
 
-    private void startParticleEffect(List<FallingBlock> fallingBlocks, Map<String, Object> particleEffects) {
-        for (FallingBlock fb : fallingBlocks) {
-            // Запускаем задачу для отслеживания одного FallingBlock
-            // Исправлено: присваиваем результат BukkitTask переменной task (внешней по отношению к лямбде)
-            // Исправлено: параметр лямбды переименован в particleEffectTask, чтобы избежать конфликта с внешней переменной task
-            BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, particleEffectTask -> {
-                if (fb.isDead()) {
-                    particleEffectTask.cancel(); // Отменяем задачу particleEffectTask (внутренняя)
+private void startParticleEffect(List<FallingBlock> fallingBlocks, Map<String, Object> particleEffects) {
+    for (FallingBlock fb : fallingBlocks) {
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (fb.isDead() || fb.isOnGround()) {
+                    cancel();
                     return;
                 }
-                // Выбираем случайный эффект частиц
+
                 List<String> effectKeys = new ArrayList<>(particleEffects.keySet());
                 String randomEffectKey = effectKeys.get(new Random().nextInt(effectKeys.size()));
                 Map<String, Object> effectData = (Map<String, Object>) particleEffects.get(randomEffectKey);
 
                 if (!(Boolean) effectData.getOrDefault("enabled", true)) return;
-
                 if (Math.random() * 100 > (Double) effectData.getOrDefault("chance", 100.0)) return;
 
                 String particleName = (String) effectData.getOrDefault("particle-effect", "FLAME");
                 Particle particle = Particle.valueOf(particleName);
                 int amount = (Integer) effectData.getOrDefault("amount", 1);
-                double spreadX = (Double) effectData.getOrDefault("spread", 0.1);
-                double spreadY = (Double) effectData.getOrDefault("spread", 0.1);
-                double spreadZ = (Double) effectData.getOrDefault("spread", 0.1);
+                double spread = (Double) effectData.getOrDefault("spread", 0.1);
                 double speed = (Double) effectData.getOrDefault("speed", 0.05);
 
-                fb.getWorld().spawnParticle(particle, fb.getLocation(), amount, spreadX, spreadY, spreadZ, speed);
-            }, 0, configManager.getParticleInterval() * 2L); // Интервал из конфига
-            // Задача 'task' теперь корректно инициализирована за пределами лямбды
-        }
+                fb.getWorld().spawnParticle(particle, fb.getLocation(), amount, spread, spread, spread, speed);
+            }
+        }.runTaskTimerAsynchronously(plugin, 0L, configManager.getParticleInterval() * 2L);
     }
+}
+
 
     private void scheduleImpactHandling(Location coreLocation, Map<String, Object> meteoriteConfig, List<FallingBlock> fallingBlocks) {
         // Грубая оценка времени падения
