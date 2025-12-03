@@ -1,0 +1,15 @@
+name: CustomMeteorites
+version: ${project.version}
+main: ru.yourname.custommeteorites.CustomMeteoritesPlugin
+api-version: 1.21
+author: N1xend
+description: Плагин для генерации метеоритов с лутом в мире.
+commands:
+  meteor:
+    description: Команды для управления метеоритами.
+    usage: /<command> [force|reload]
+    permission: custommeteorites.admin
+permissions:
+  custommeteorites.admin:
+    description: Позволяет использовать команды администратора метеоритов.
+    default: op
