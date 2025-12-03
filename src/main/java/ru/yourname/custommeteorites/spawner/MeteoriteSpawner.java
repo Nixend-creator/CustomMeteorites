@@ -1,6 +1,7 @@
 package ru.yourname.custommeteorites.spawner;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3; // Добавлен импорт
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -10,7 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.yourname.custommeteorites.config.ConfigManager;
-import ru.yourname.custommeteorites.generator.MeteoriteGenerator;
+import ru.yourname.custommeteorites.generator.MeteoriteGenerator; // Убедитесь, что импорт правильный
 
 import java.util.List;
 import java.util.Map;
@@ -20,13 +21,13 @@ public class MeteoriteSpawner {
 
     private final JavaPlugin plugin;
     private final ConfigManager configManager;
-    private final MeteoriteGenerator generator;
+    private final MeteoriteGenerator generator; // Убедитесь, что тип правильный
     private final Random random = new Random();
 
     public MeteoriteSpawner(JavaPlugin plugin, ConfigManager configManager) {
         this.plugin = plugin;
         this.configManager = configManager;
-        this.generator = new MeteoriteGenerator(plugin, configManager);
+        this.generator = new MeteoriteGenerator(plugin, configManager); // Убедитесь, что конструктор существует
     }
 
     public void startScheduler() {
@@ -127,8 +128,8 @@ public class MeteoriteSpawner {
             RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
             RegionManager regions = container.get(BukkitAdapter.adapt(world));
             if (regions != null) {
-                com.sk89q.worldedit.util.Location worldEditLoc = BukkitAdapter.adapt(location);
-                ApplicableRegionSet regionSet = regions.getApplicableRegions(worldEditLoc.toBlockPoint());
+                BlockVector3 worldEditLoc = BukkitAdapter.adapt(location).toBlockVector3(); // Исправлено: используем BlockVector3
+                ApplicableRegionSet regionSet = regions.getApplicableRegions(worldEditLoc);
 
                 if (configManager.isProtectAllWorldGuardZones()) {
                     if (!regionSet.getRegions().isEmpty()) {
@@ -138,16 +139,19 @@ public class MeteoriteSpawner {
                     List<String> safeZoneNames = configManager.getWorldGuardSafeZoneNames();
                     for (com.sk89q.worldguard.protection.regions.ProtectedRegion region : regionSet.getRegions()) {
                         if (safeZoneNames.contains(region.getId())) {
-                            // Проверяем буфер
-                            if (region.contains(worldEditLoc.toBlockPoint().add(
-                                    -configManager.getWorldGuardSafeZoneBuffer(),
-                                    0,
-                                    -configManager.getWorldGuardSafeZoneBuffer()
-                            )) && region.contains(worldEditLoc.toBlockPoint().add(
-                                    configManager.getWorldGuardSafeZoneBuffer(),
-                                    0,
-                                    configManager.getWorldGuardSafeZoneBuffer()
-                            ))) {
+                            // Проверяем буфер - Исправлено: используем BlockVector3
+                            BlockVector3 bufferMin = worldEditLoc.add(
+                                -configManager.getWorldGuardSafeZoneBuffer(),
+                                0,
+                                -configManager.getWorldGuardSafeZoneBuffer()
+                            );
+                            BlockVector3 bufferMax = worldEditLoc.add(
+                                configManager.getWorldGuardSafeZoneBuffer(),
+                                0,
+                                configManager.getWorldGuardSafeZoneBuffer()
+                            );
+
+                            if (region.contains(bufferMin) && region.contains(bufferMax)) {
                                 return false; // Точка внутри буфера защищённой зоны
                             }
                         }
