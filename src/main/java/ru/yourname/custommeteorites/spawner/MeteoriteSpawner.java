@@ -128,7 +128,8 @@ public class MeteoriteSpawner {
             RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
             RegionManager regions = container.get(BukkitAdapter.adapt(world));
             if (regions != null) {
-                BlockVector3 worldEditLoc = BukkitAdapter.adapt(location).toBlockVector3(); // Исправлено: используем BlockVector3
+                // Исправлено: используем BlockVector3 и toVector3()
+                BlockVector3 worldEditLoc = BukkitAdapter.adapt(location).toVector3().toBlockPoint();
                 ApplicableRegionSet regionSet = regions.getApplicableRegions(worldEditLoc);
 
                 if (configManager.isProtectAllWorldGuardZones()) {
@@ -139,7 +140,7 @@ public class MeteoriteSpawner {
                     List<String> safeZoneNames = configManager.getWorldGuardSafeZoneNames();
                     for (com.sk89q.worldguard.protection.regions.ProtectedRegion region : regionSet.getRegions()) {
                         if (safeZoneNames.contains(region.getId())) {
-                            // Проверяем буфер - Исправлено: используем BlockVector3
+                            // Проверяем буфер - Исправлено: используем BlockVector3 и add()
                             BlockVector3 bufferMin = worldEditLoc.add(
                                 -configManager.getWorldGuardSafeZoneBuffer(),
                                 0,
