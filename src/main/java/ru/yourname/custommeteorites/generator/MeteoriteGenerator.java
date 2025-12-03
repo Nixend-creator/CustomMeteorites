@@ -171,7 +171,7 @@ public class MeteoriteGenerator {
             // Исправлено: присваиваем результат BukkitTask переменной task
             BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, particleTask -> {
                 if (fb.isDead()) {
-                    particleTask.cancel();
+                    particleTask.cancel(); // Отменяем задачу particleTask, а не task
                     return;
                 }
                 // Выбираем случайный эффект частиц
