@@ -1,0 +1,781 @@
+# --- Настройки плагина CustomMeteorites ---
+
+# Включить/выключать случайное падение метеоритов.
+enable-random-meteorites: true
+# Интервал между случайными метеоритами (в секундах).
+random-meteorite-interval: 10800
+# Название мира, в котором будут падать метеориты.
+random-meteorite-world: world
+# Укажите координаты региона (X и Z), в пределах которого могут падать метеориты.
+random-meteorite-max-spawn-x-coord: 2500
+random-meteorite-max-spawn-z-coord: 2500
+random-meteorite-min-spawn-x-coord: -2500
+random-meteorite-min-spawn-z-coord: -2500
+# Высота (координата Y), на которой появляются метеориты.
+# Рекомендуется не превышать 256. Метеориты исчезают, если появляются выше этого уровня.
+random-meteorite-spawn-height: 150
+
+# Защита зон WorldGuard. Требуются плагины WorldGuard и WorldEdit.
+# Включите, чтобы метеориты не падали в "безопасные зоны" WorldGuard.
+enable-worldguard-safe-zones: false
+# Названия регионов WorldGuard, в которые метеориты не должны падать.
+worldguard-safe-zone-names:
+  - 'spawn'
+  - 'MyHouse'
+# Включите, чтобы защитить ВСЕ регионы WorldGuard.
+protect-all-worldguard-zones: false
+# Минимальное расстояние (в блоках) от границ безопасной зоны, на котором может появиться метеорит.
+# Установите 0, чтобы отключить буфер.
+worldguard-safe-zone-buffer: 100
+
+# Защита зон GriefPrevention.
+# Включите, чтобы метеориты не падали в заявленные территории игроков.
+# (Интеграция с GriefPrevention не реализована в этом примере)
+enable-griefprevention-safe-zones: false
+griefprevention-safe-zone-buffer: 50
+
+# --- Настройки метеоритов ---
+meteorites:
+  '1': # Огненный
+    # Шанс появления по сравнению с другими метеоритами.
+    chance: 10
+    # Время (в секундах), через которое метеорит исчезает. 0 — оставлять навсегда.
+    # Минимум 20 секунд, чтобы метеорит успел упасть!
+    clean-up-meteorite-blocks-interval: 200
+    # Скорость метеорита (0–5). Рекомендуется 2. (Это влияет на setVelocity)
+    meteorite-speed: 2
+    outer-layer-size: 4
+    enable-inner-layer: true
+    inner-layer-size: 3
+    # Сообщение в чат при появлении метеорита. Оставьте пустым, чтобы отключить.
+    chat-message: '&9[&6CustomMeteorites&9] &7Был замечен &4&lОгненный &9&lМетеорит &7около &3X:&f%x% &3Z:&f%z% &7!'
+    # Команды, выполняемые при появлении метеорита (в консоли). Поддерживаются плейсхолдеры.
+    meteorite-spawn-commands:
+      - ''
+    # Ядро метеорита (материал: вес)
+    core-block:
+      NETHERITE_BLOCK: 1
+      ANCIENT_DEBRIS: 2
+    inner-layer-blocks:
+      DIAMOND_ORE: 5
+      GOLD_ORE: 10
+      NETHER_QUARTZ_ORE: 5
+    outer-layer-blocks:
+      MAGMA_BLOCK: 10
+      NETHERRACK: 10
+      OBSIDIAN: 5
+  '2': # Ледяной
+    chance: 5
+    clean-up-meteorite-blocks-interval: 0
+    meteorite-speed: 2
+    outer-layer-size: 5
+    enable-inner-layer: true
+    inner-layer-size: 3
+    chat-message: '&9[&6CustomMeteorites&9] &7Был замечен &b&lЛедяной &9&lМетеорит &7около &3X:&f%x% &3Z:&f%z% &7!'
+    meteorite-spawn-commands:
+      - ''
+    core-block:
+      DIAMOND_BLOCK: 1
+      EMERALD_BLOCK: 1
+    inner-layer-blocks:
+      DIAMOND_ORE: 5
+      TUBE_CORAL_BLOCK: 5
+      BLUE_ICE: 10
+    outer-layer-blocks:
+      BLUE_ICE: 10
+      PACKED_ICE: 15
+      CYAN_GLAZED_TERRACOTTA: 5
+      LIGHT_BLUE_GLAZED_TERRACOTTA: 5
+      BLUE_GLAZED_TERRACOTTA: 2
+      BLUE_STAINED_GLASS: 10
+      OBSIDIAN: 10
+
+# --- Настройки ядра ---
+core-settings:
+  can-hurt-entities: true
+  drop-item-when-destroyed: false
+  enable-explosion: true
+  explosion-power: 6
+  explosion-breaks-blocks: true
+  explosion-sets-fire: true
+  enable-lighting-strike: true
+  message: '&9[&6CustomMeteorites&9] &7Метеорит упал!'
+  commands:
+    - ''
+
+# --- Настройки внутреннего слоя ---
+inner-layer-settings:
+  can-hurt-entities: true
+  drop-item-when-destroyed: false
+  enable-explosion: true
+  explosion-breaks-blocks: false
+  explosion-power: 1
+  explosion-sets-fire: true
+  enable-lighting-strike: false
+
+# --- Настройки внешнего слоя ---
+outer-layer-settings:
+  can-hurt-entities: true
+  drop-item-when-destroyed: false
+  enable-explosion: true
+  explosion-breaks-blocks: false
+  explosion-power: 1
+  explosion-sets-fire: true
+  enable-lighting-strike: false
+
+# --- Настройки частиц ---
+enable-meteorite-particles: true
+# Интервал появления частиц (1–10). Меньше = больше частиц.
+meteorite-particle-interval: 5
+possible-meteorite-particle-effects:
+  '1':
+    enabled: true
+    chance: 30
+    particle-effect: CAMPFIRE_COSY_SMOKE
+    amount: 1
+    spread: 0.1
+    speed: 0.05
+    force-visibility: true
+  '2':
+    enabled: true
+    chance: 10
+    particle-effect: SMOKE
+    amount: 1
+    spread: 5
+    speed: 0.1
+    force-visibility: true
+  '3':
+    enabled: true
+    chance: 10
+    particle-effect: SMOKE_NORMAL
+    amount: 1
+    spread: 0.1
+    speed: 0.3
+    force-visibility: true
+  '4':
+    enabled: true
+    chance: 20
+    particle-effect: FLAME
+    amount: 1
+    spread: 0.1
+    speed: 0.05
+    force-visibility: true
+
+# --- Настройки сокровищ ---
+enable-meteorite-treasure: true
+treasure-barrel-or-chest: 'CHEST' # или 'BARREL'
+treasure-content:
+  # --- ОРУЖИЕ ---
+  '1':
+    enabled: true
+    item-type: DIAMOND_SWORD
+    amount: 1
+    chance: 20
+    display-name: '&6Клинок Звёздного Пламени'
+    lore:
+      - '&7Этот клинок, кованный из руды, упавшей с небес,'
+      - '&7кажется, пылает внутренним огнём.'
+      - '&7Он жаждет битвы и не знает страха.'
+      - ''
+      - '&8[Сияющая Сталь]'
+    unbreakable: true
+    enchants:
+      sharpness: 5
+      fire_aspect: 2
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '2':
+    enabled: true
+    item-type: NETHERITE_SWORD
+    amount: 1
+    chance: 15
+    display-name: '&8Клинок Теней Космоса'
+    lore:
+      - '&7Когда-то он был частью древнего'
+      - '&7и неземного ритуала. Теперь он'
+      - '&7жаждет крови вражеской.'
+      - ''
+      - '&8[Тень Падшего Мира]'
+    unbreakable: true
+    enchants:
+      sharpness: 4
+      looting: 3
+      sweeping_edge: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '3':
+    enabled: true
+    item-type: BOW
+    amount: 1
+    chance: 25
+    display-name: '&eЛук Метеоритного Ветра'
+    lore:
+      - '&7Тетива этого лука из космической нити.'
+      - '&7Выпущенная стрела летит быстрее ветра'
+      - '&7и не знает промаха.'
+      - ''
+      - '&8[Песнь Ветра]'
+    unbreakable: true
+    enchants:
+      power: 5
+      punch: 2
+      infinity: 1
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '4':
+    enabled: true
+    item-type: CROSSBOW
+    amount: 1
+    chance: 20
+    display-name: '&7Арбалет Грома С небес'
+    lore:
+      - '&7При выстреле издаёт звук,'
+      - '&7похожий на раскаты грома.'
+      - '&7Несёт смерть с небес.'
+      - ''
+      - '&8[Голос Молнии]'
+    unbreakable: true
+    enchants:
+      power: 4
+      pierce: 4
+      quick_charge: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+
+  # --- ИНСТРУМЕНТЫ ---
+  '5':
+    enabled: true
+    item-type: NETHERITE_PICKAXE
+    amount: 1
+    chance: 20
+    display-name: '&8Кирка Глубинного Грохота'
+    lore:
+      - '&7Когда-то принадлежала древнему шахтёру,'
+      - '&7исчезнувшему в бездне. Теперь она сокрушает'
+      - '&7камень так, будто он бумага.'
+      - ''
+      - '&8[Искусство Подземелья]'
+    unbreakable: true
+    enchants:
+      efficiency: 5
+      silk_touch: 1
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '6':
+    enabled: true
+    item-type: DIAMOND_PICKAXE
+    amount: 1
+    chance: 30
+    display-name: '&bКирка Кристаллической Песни'
+    lore:
+      - '&7При работе издаёт мелодию,'
+      - '&7напоминающую звуки кристаллов.'
+      - '&7Даже самый твёрдый камень поддастся.'
+      - ''
+      - '&8[Песнь Руды]'
+    unbreakable: true
+    enchants:
+      efficiency: 4
+      fortune: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '7':
+    enabled: true
+    item-type: NETHERITE_AXE
+    amount: 1
+    chance: 15
+    display-name: '&8Топор Космической Бури'
+    lore:
+      - '&7Рубит деревья, как будто они'
+      - '&7лишь сухие ветки. Даже незерит'
+      - '&7не выдержит его лезвия.'
+      - ''
+      - '&8[Ярость Стихии]'
+    unbreakable: true
+    enchants:
+      efficiency: 5
+      sharpness: 5 # Урон по мобам
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '8':
+    enabled: true
+    item-type: DIAMOND_AXE
+    amount: 1
+    chance: 25
+    display-name: '&eТопор Лесного Вздоха'
+    lore:
+      - '&7Лес шепчет ему имена павших деревьев,'
+      - '&7а он отзывается звоном стали.'
+      - '&7С ним лес рубится легко.'
+      - ''
+      - '&8[Шёпот Природы]'
+    unbreakable: true
+    enchants:
+      efficiency: 4
+      fortune: 2
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '9':
+    enabled: true
+    item-type: NETHERITE_SHOVEL
+    amount: 1
+    chance: 10
+    display-name: '&8Лопата Земляного Рыка'
+    lore:
+      - '&7Копает землю, как будто она'
+      - '&7воздух. Быстрая и точная.'
+      - '&7Идеальна для подземных дел.'
+      - ''
+      - '&8[Голос Земли]'
+    unbreakable: true
+    enchants:
+      efficiency: 5
+      silk_touch: 1
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '10':
+    enabled: true
+    item-type: DIAMOND_SHOVEL
+    amount: 1
+    chance: 20
+    display-name: '&7Лопата Песчаной Бури'
+    lore:
+      - '&7Поднимает землю и песок,'
+      - '&7как будто они пыль. С ней'
+      - '&7даже пустыня станет плодородной.'
+      - ''
+      - '&8[Танец Песка]'
+    unbreakable: true
+    enchants:
+      efficiency: 4
+      fortune: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '11':
+    enabled: true
+    item-type: NETHERITE_HOE
+    amount: 1
+    chance: 5
+    display-name: '&8Мотыга Урожайной Звезды'
+    lore:
+      - '&7Пашет землю, оставляя за собой'
+      - '&7след плодородия. Урожай обеспечен.'
+      - '&7С ней земля благодарит тебя.'
+      - ''
+      - '&8[Дар Природы]'
+    unbreakable: true
+    enchants:
+      efficiency: 5
+      fortune: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '12':
+    enabled: true
+    item-type: DIAMOND_HOE
+    amount: 1
+    chance: 15
+    display-name: '&7Мотыга Рассветного Света'
+    lore:
+      - '&7Под лучами рассвета земля'
+      - '&7становится готовой к посеву.'
+      - '&7Эта мотыга — ключ к урожаю.'
+      - ''
+      - '&8[Свет Надежды]'
+    unbreakable: true
+    enchants:
+      efficiency: 4
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+
+  # --- БРОНЯ ---
+  '13':
+    enabled: true
+    item-type: NETHERITE_HELMET
+    amount: 1
+    chance: 15
+    display-name: '&8Шлем Теней Космоса'
+    lore:
+      - '&7Покрывает владельца тенями,'
+      - '&7делая его незаметным для зла.'
+      - '&7Защищает разум от космических шепотов.'
+      - ''
+      - '&8[Щит Разума]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      fire_protection: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '14':
+    enabled: true
+    item-type: DIAMOND_HELMET
+    amount: 1
+    chance: 25
+    display-name: '&bШлем Кристаллического Взгляда'
+    lore:
+      - '&7Дарует ясность видения.'
+      - '&7Владелец видит сквозь тьму'
+      - '&7и обман. Защищает от бед.'
+      - ''
+      - '&8[Око Истины]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      aqua_affinity: 1
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '15':
+    enabled: true
+    item-type: NETHERITE_CHESTPLATE
+    amount: 1
+    chance: 15
+    display-name: '&8Нагрудник Сердца Метеорита'
+    lore:
+      - '&7Сердце космоса бьётся в унисон'
+      - '&7с сердцем владельца. Защищает'
+      - '&7от смертельных ударов.'
+      - ''
+      - '&8[Пульс Жизни]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      blast_protection: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '16':
+    enabled: true
+    item-type: DIAMOND_CHESTPLATE
+    amount: 1
+    chance: 25
+    display-name: '&7Нагрудник Звёздной Брони'
+    lore:
+      - '&7Простая, но надёжная броня,'
+      - '&7укреплённая космическим металлом.'
+      - '&7Надёжная защита в опасных землях.'
+      - ''
+      - '&8[Щит Странника]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '17':
+    enabled: true
+    item-type: NETHERITE_LEGGINGS
+    amount: 1
+    chance: 15
+    display-name: '&8Поножи Пылающего Пути'
+    lore:
+      - '&7Даруют скорость, как у метеора.'
+      - '&7Владелец скользит по земле,'
+      - '&7не оставляя следа. Путь всегда открыт.'
+      - ''
+      - '&8[Танец Огня]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      fire_protection: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '18':
+    enabled: true
+    item-type: DIAMOND_LEGGINGS
+    amount: 1
+    chance: 25
+    display-name: '&7Поножи Стального Стража'
+    lore:
+      - '&7Надёжная защита для долгих'
+      - '&7путешествий. Никакая опасность'
+      - '&7не остановит владельца.'
+      - ''
+      - '&8[Опора Стойкости]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '19':
+    enabled: true
+    item-type: NETHERITE_BOOTS
+    amount: 1
+    chance: 15
+    display-name: '&8Ботинки Летящей Тени'
+    lore:
+      - '&7Позволяют ступать по воздуху,'
+      - '&7как по земле. Владелец'
+      - '&7становится тенью ветра.'
+      - ''
+      - '&8[Шаги Призрака]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      feather_falling: 4
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+  '20':
+    enabled: true
+    item-type: DIAMOND_BOOTS
+    amount: 1
+    chance: 25
+    display-name: '&7Ботинки Странника'
+    lore:
+      - '&7Износоустойчивы и удобны.'
+      - '&7С ними даже самые долгие'
+      - '&7пути не кажутся утомительными.'
+      - ''
+      - '&8[Путь Без Конца]'
+    unbreakable: true
+    enchants:
+      protection: 4
+      depth_strider: 3
+      unbreaking: 3
+    custom-model-data: 0
+    damage: 0
+
+  # --- ДРУГИЕ ЦЕННЫЕ ПРЕДМЕТЫ ---
+  '21':
+    enabled: true
+    item-type: ELYTRA
+    amount: 1
+    chance: 10
+    display-name: '&fКрылья Ветра Метеорита'
+    lore:
+      - '&7Неповреждённые крылья, найденные внутри'
+      - '&7сердца метеорита. Они зовут ввысь,'
+      - '&7обещая вольную волю над облаками.'
+      - ''
+      - '&8[Полёт на Созвездия]'
+    unbreakable: false
+    enchants:
+      mending: 1
+      unbreaking: 1
+    custom-model-data: 0
+    damage: 0
+  '22':
+    enabled: true
+    item-type: TOTEM_OF_UNDYING
+    amount: 1
+    chance: 10
+    display-name: '&cТалисман Сердца Метеорита'
+    lore:
+      - '&7Пульсирует таинственной силой,'
+      - '&7дарующей второе дыхание. Даже смерть'
+      - '&7боится коснуться того, кто носит его.'
+      - ''
+      - '&8[Бессмертный Пульс]'
+    unbreakable: true
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '23':
+    enabled: true
+    item-type: DRAGON_EGG
+    amount: 1
+    chance: 5
+    display-name: '&5Яйцо Космической Змеи'
+    lore:
+      - '&7Невозможно определить, живо ли оно.'
+      - '&7Таинственная энергия исходит из глубины'
+      - '&7этого артефакта из другого мира.'
+      - ''
+      - '&8[Запретное Наследие]'
+    unbreakable: true
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '24':
+    enabled: true
+    item-type: NETHER_STAR
+    amount: 1
+    chance: 5
+    display-name: '&eСердце Погибшей Звезды'
+    lore:
+      - '&7Осколок могущества, разрушенного'
+      - '&7в битве между мирами. Его свет'
+      - '&7вспыхивает в темноте, как маяк.'
+      - ''
+      - '&8[Пепел Звёздной Войны]'
+    unbreakable: true
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '25':
+    enabled: true
+    item-type: ENCHANTED_GOLDEN_APPLE
+    amount: 1
+    chance: 30
+    display-name: '&6Яблоко Бессмертия'
+    lore:
+      - '&7Слегка мерцающее яблоко,'
+      - '&7наполненное силой, упавшей с небес.'
+      - '&7Его вкус — вкус бессмертия.'
+      - ''
+      - '&8[Нектар Богов]'
+    unbreakable: false
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '26':
+    enabled: true
+    item-type: DIAMOND
+    amount: 32
+    chance: 80
+    display-name: '&bАлмазы Космической Кузни'
+    lore:
+      - '&7Кристаллы, сформировавшиеся под'
+      - '&7давлением и жаром другого мира.'
+      - '&7Их блеск неповторим.'
+      - ''
+      - '&8[Звёздная Твёрдость]'
+    unbreakable: false
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '27':
+    enabled: true
+    item-type: EMERALD
+    amount: 16
+    chance: 80
+    display-name: '&aИзумруды Падшего Сада'
+    lore:
+      - '&7Зелёные, как первая трава,'
+      - '&7но твёрдые, как воля исследователя.'
+      - '&7Ценятся выше золота.'
+      - ''
+      - '&8[Сияние Рая]'
+    unbreakable: false
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '28':
+    enabled: true
+    item-type: EXPERIENCE_BOTTLE
+    amount: 16
+    chance: 60
+    display-name: '&bФлакон Звёздной Пыли'
+    lore:
+      - '&7Каждая капля внутри —'
+      - '&7это крупица знаний, упавших'
+      - '&7с далёких звёзд.'
+      - ''
+      - '&8[Эликсир Мудрости]'
+    unbreakable: false
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '29':
+    enabled: true
+    item-type: COOKED_BEEF
+    amount: 10
+    chance: 90
+    display-name: '&cСтейк из Мира Космоса'
+    lore:
+      - '&7Приготовлен на углях метеорита.'
+      - '&7Даёт силы, чтобы идти дальше.'
+      - '&7Простая, но сытная еда.'
+      - ''
+      - '&8[Пища Героев]'
+    unbreakable: false
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+  '30':
+    enabled: true
+    item-type: OBSIDIAN
+    amount: 10
+    chance: 100
+    display-name: '&8Обсидиан Сердца Метеорита'
+    lore:
+      - '&7Чёрный, как бездна,'
+      - '&7твёрдый, как воля к жизни.'
+      - '&7Основа для великих сооружений.'
+      - ''
+      - '&8[Камень Начала]'
+    unbreakable: false
+    enchants: {}
+    custom-model-data: 0
+    damage: 0
+
+# --- Настройки охранника ---
+enable-treasure-guardian: true
+possible-guardians:
+  'meteoriteguardian':
+    enabled: true
+    player-message: '&8[&9Охранник Метеорита&8] &cТы ошибся, пришедши сюда. Расплачивайся!'
+    commands:
+      - ''
+    use-command-only: false
+    guardian-spawn-sound: entity.ender_dragon.growl
+    guardian-spawn-sound-volume: 5
+    guardian-spawn-sound-pitch: 0.5
+    guardian-mob-type: WITHER_SKELETON
+    chance: 10
+    guardian-display-name: '&9Охранник Метеорита'
+    guardian-attack-damage: 12
+    guardian-health: 80
+    guardian-movement-speed: 0.45
+    enable-guardian-equipment: true
+    guardian-equipment:
+      main-hand: DIAMOND_SWORD
+      off-hand: SHIELD
+      helmet: NETHERITE_HELMET
+      chestplate: NETHERITE_CHESTPLATE
+      leggings: NETHERITE_LEGGINGS
+      boots: NETHERITE_BOOTS
+  'goldenguardian':
+    enabled: true
+    player-message: '&8[&eЗолотой Страж&8] &cНЕ ТРОГАЙ МОЙ КЛАД!'
+    guardian-spawn-sound: entity.ravager.celebrate
+    guardian-spawn-sound-volume: 5
+    guardian-spawn-sound-pitch: 0.7
+    guardian-mob-type: ZOMBIE
+    chance: 10
+    guardian-display-name: '&eЗолотой Страж'
+    guardian-attack-damage: 9
+    guardian-health: 150
+    guardian-movement-speed: 0.35
+    enable-guardian-equipment: true
+    guardian-equipment:
+      main-hand: NETHERITE_AXE
+      off-hand: GOLDEN_APPLE
+      helmet: GOLDEN_HELMET
+      chestplate: GOLDEN_CHESTPLATE
+      leggings: GOLDEN_LEGGINGS
+      boots: GOLDEN_BOOTS
+  'defaultsettingsexample':
+    enabled: false
+    player-message: ''
+    guardian-spawn-sound: ''
+    guardian-mob-type: ZOMBIE
+    chance: 0
+    guardian-display-name: ''
+    guardian-attack-damage: default
+    guardian-health: default
+    guardian-movement-speed: default
+    enable-guardian-equipment: false
+    guardian-equipment:
+      main-hand: ''
+      off-hand: ''
+      helmet: ''
+      chestplate: ''
+      leggings: ''
+      boots: ''
