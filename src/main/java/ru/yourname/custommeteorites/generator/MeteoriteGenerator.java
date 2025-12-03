@@ -40,8 +40,8 @@ public class MeteoriteGenerator {
         String message = (String) meteoriteConfig.getOrDefault("chat-message", "&6[Метеориты]&f Метеорит был замечен!");
         if (message != null && !message.isEmpty()) {
             message = message
-                    .replace("%locationX%", String.valueOf(spawnLocation.getBlockX())) // Исправлено: используем locationX
-                    .replace("%locationZ%", String.valueOf(spawnLocation.getBlockZ())); // Исправлено: используем locationZ
+                    .replace("%locationX%", String.valueOf(spawnLocation.getBlockX()))
+                    .replace("%locationZ%", String.valueOf(spawnLocation.getBlockZ()));
             Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', message));
         }
 
