@@ -1,0 +1,660 @@
+# ================================================================
+#                    CUSTOM METEORITES CONFIG
+# ================================================================
+#   Автор: n1xend
+#   Версія: 1.0.0
+# ================================================================
+
+# ────────────────────────────────────────────────────────────────
+#   ГЛОБАЛЬНІ НАЛАШТУВАННЯ
+# ────────────────────────────────────────────────────────────────
+
+enable-random-meteorites: true
+random-meteorite-interval: 10800
+random-meteorite-world: world
+
+random-meteorite-max-spawn-x-coord: 2500
+random-meteorite-max-spawn-z-coord: 2500
+random-meteorite-min-spawn-x-coord: -2500
+random-meteorite-min-spawn-z-coord: -2500
+
+random-meteorite-spawn-height: 150
+
+# ────────────────────────────────────────────────────────────────
+#   СПИСОК ВСІХ МЕТЕОРИТІВ
+# ────────────────────────────────────────────────────────────────
+meteorites:
+  # ============================================================
+  #   1) Кам’яний — частий
+  # ============================================================
+  '1':
+    chance: 60
+    clean-up-meteorite-blocks-interval: 200
+    meteorite-speed: 2
+    outer-layer-size: 4
+    enable-inner-layer: false
+    inner-layer-size: 0
+
+    chat-message: '&7Был замечен &fкаменный метеорит &7около &3X:&f%x% &3Z:&f%z%!'
+    meteorite-spawn-commands: []
+
+    core-block:
+      STONE: 5
+      COBBLESTONE: 3
+
+    inner-layer-blocks: {}
+
+    outer-layer-blocks:
+      STONE: 10
+      COBBLESTONE: 10
+      ANDESITE: 5
+      DIORITE: 5
+      GRAVEL: 4
+
+  # ============================================================
+  #   2) Огненный — редкий
+  # ============================================================
+  '2':
+    chance: 20
+    clean-up-meteorite-blocks-interval: 200
+    meteorite-speed: 2
+    outer-layer-size: 4
+    enable-inner-layer: true
+    inner-layer-size: 3
+
+    chat-message: '&cПылающий метеорит падает около &3X:&f%x% &3Z:&f%z%!'
+    meteorite-spawn-commands: []
+
+    core-block:
+      NETHERITE_BLOCK: 1
+      ANCIENT_DEBRIS: 3
+
+    inner-layer-blocks:
+      GOLD_ORE: 10
+      NETHER_QUARTZ_ORE: 5
+      REDSTONE_ORE: 6
+
+    outer-layer-blocks:
+      MAGMA_BLOCK: 10
+      NETHERRACK: 10
+      OBSIDIAN: 6
+      BASALT: 5
+
+  # ============================================================
+  #   3) Ледяной — редкий
+  # ============================================================
+  '3':
+    chance: 15
+    clean-up-meteorite-blocks-interval: 200
+    meteorite-speed: 2
+    outer-layer-size: 5
+    enable-inner-layer: true
+    inner-layer-size: 3
+
+    chat-message: '&bЛедяной метеорит обнаружен в районе &3X:&f%x% &3Z:&f%z%!'
+    meteorite-spawn-commands: []
+
+    core-block:
+      DIAMOND_BLOCK: 1
+      EMERALD_BLOCK: 1
+
+    inner-layer-blocks:
+      BLUE_ICE: 10
+      PACKED_ICE: 5
+      SNOW_BLOCK: 5
+
+    outer-layer-blocks:
+      BLUE_ICE: 10
+      PACKED_ICE: 6
+      ICE: 10
+      LIGHT_BLUE_CONCRETE: 4
+
+  # ============================================================
+  #   4) Золотой — эпический
+  # ============================================================
+  '4':
+    chance: 8
+    clean-up-meteorite-blocks-interval: 250
+    meteorite-speed: 1.8
+    outer-layer-size: 5
+    enable-inner-layer: true
+    inner-layer-size: 4
+
+    chat-message: '&eЗолотой метеорит приближается! Координаты X:&f%x% Z:&f%z%'
+    meteorite-spawn-commands: []
+
+    core-block:
+      GOLD_BLOCK: 4
+      RAW_GOLD_BLOCK: 6
+
+    inner-layer-blocks:
+      RAW_GOLD_BLOCK: 10
+      GOLD_ORE: 10
+      DEEPSLATE_GOLD_ORE: 6
+
+    outer-layer-blocks:
+      YELLOW_TERRACOTTA: 15
+      GOLD_BLOCK: 5
+
+  # ============================================================
+  #   5) Обсидиановый — эпический
+  # ============================================================
+  '5':
+    chance: 5
+    clean-up-meteorite-blocks-interval: 300
+    meteorite-speed: 2
+    outer-layer-size: 6
+    enable-inner-layer: true
+    inner-layer-size: 4
+
+    chat-message: '&8Обсидиановый метеорит зафиксирован! X:&f%x% Z:&f%z%'
+    meteorite-spawn-commands: []
+
+    core-block:
+      OBSIDIAN: 10
+      CRYING_OBSIDIAN: 4
+
+    inner-layer-blocks:
+      OBSIDIAN: 10
+      DEEPSLATE_COAL_ORE: 6
+      AMETHYST_BLOCK: 4
+
+    outer-layer-blocks:
+      OBSIDIAN: 10
+      BLACKSTONE: 10
+
+  # ============================================================
+  #   6) Неоновый — легендарный
+  # ============================================================
+  '6':
+    chance: 2
+    clean-up-meteorite-blocks-interval: 400
+    meteorite-speed: 1.5
+    outer-layer-size: 6
+    enable-inner-layer: true
+    inner-layer-size: 4
+
+    chat-message: '&d&lНЕОНОВЫЙ МЕТЕОРИТ &7приближается к координатам &3X:&f%x% &3Z:&f%z%'
+    meteorite-spawn-commands: []
+
+    core-block:
+      AMETHYST_BLOCK: 10
+      END_STONE: 5
+
+    inner-layer-blocks:
+      PURPLE_TERRACOTTA: 10
+      MAGENTA_TERRACOTTA: 10
+      END_STONE_BRICKS: 5
+
+    outer-layer-blocks:
+      PURPLE_GLAZED_TERRACOTTA: 10
+      PURPUR_BLOCK: 10
+      END_STONE: 5
+
+# ────────────────────────────────────────────────────────────────
+#   ВИБУХИ (ядро / внутренний / внешний слой)
+# ────────────────────────────────────────────────────────────────
+
+core-settings:
+  enable-explosion: true
+  explosion-power: 6
+  explosion-breaks-blocks: true
+  explosion-sets-fire: true
+  enable-lighting-strike: true
+  message: '&6[Метеориты] &eМетеорит упал!'
+
+inner-layer-settings:
+  enable-explosion: true
+  explosion-power: 2
+  explosion-breaks-blocks: false
+  explosion-sets-fire: false
+  enable-lighting-strike: false
+
+outer-layer-settings:
+  enable-explosion: true
+  explosion-power: 1
+  explosion-breaks-blocks: false
+  explosion-sets-fire: false
+  enable-lighting-strike: false
+
+# ────────────────────────────────────────────────────────────────
+#   ЕФФЕКТЫ ЧАСТИЦ
+# ────────────────────────────────────────────────────────────────
+
+enable-meteorite-particles: true
+meteorite-particle-interval: 5
+
+possible-meteorite-particle-effects:
+  '1':
+    enabled: true
+    chance: 40
+    particle-effect: FLAME
+    amount: 3
+    spread: 0.1
+    speed: 0.1
+
+  '2':
+    enabled: true
+    chance: 20
+    particle-effect: SMOKE_LARGE
+    amount: 2
+    spread: 0.2
+    speed: 0.1
+
+  '3':
+    enabled: true
+    chance: 10
+    particle-effect: LAVA
+    amount: 3
+    spread: 0.1
+    speed: 0.2
+
+# ────────────────────────────────────────────────────────────────
+#   ВХОД В АТМОСФЕРУ
+# ────────────────────────────────────────────────────────────────
+
+atmosphere-effect:
+  enabled: true
+  particle: FLAME
+  interval-ticks: 3
+  sound: ENTITY_BLAZE_SHOOT
+  min-y: 90
+
+# ────────────────────────────────────────────────────────────────
+#   УДАРНАЯ ВОЛНА
+# ────────────────────────────────────────────────────────────────
+
+impact-shockwave:
+  enabled: true
+  radius: 12
+  knockback-strength: 1.2
+  damage: 4.0
+  apply-slow: true
+  slow-duration: 60
+  slow-amplifier: 1
+
+# ────────────────────────────────────────────────────────────────
+#   РАДАР МЕТЕОРИТІВ
+# ────────────────────────────────────────────────────────────────
+
+meteorite-radar:
+  enabled: true
+  notify-radius: 500
+  message: '&6[Радар] &fX:&e%x% &fZ:&e%z% &7(&a%dist%м&7; направление &b%dir%&7)'
+
+# ────────────────────────────────────────────────────────────────
+#   СКАРБИ — система рідкості предметів
+# ────────────────────────────────────────────────────────────────
+
+enable-meteorite-treasure: true
+treasure-barrel-or-chest: 'CHEST'
+
+# RARITY:
+#   common     — 70%
+#   rare       — 20%
+#   epic       — 8%
+#   legendary  — 2%
+
+treasure-content:
+
+  # ───────────────────────────────
+  #          COMMON (70%)
+  # ───────────────────────────────
+
+  '001':
+    enabled: true
+    item-type: DIAMOND
+    amount: 4-12
+    rarity: common
+    chance: 70
+    display-name: '&bАлмазы'
+    lore:
+      - '&7Кристаллы из глубин метеорита.'
+    enchants: {}
+
+  '002':
+    enabled: true
+    item-type: EMERALD
+    amount: 3-10
+    rarity: common
+    chance: 65
+    display-name: '&aИзумруды'
+    lore:
+      - '&7Редкие, но встречаются в метеоритах.'
+    enchants: {}
+
+  '003':
+    enabled: true
+    item-type: GOLD_INGOT
+    amount: 8-16
+    rarity: common
+    chance: 75
+    display-name: '&eЗолотые слитки'
+    lore:
+      - '&7Переплавленные остатки метеора.'
+    enchants: {}
+
+  '004':
+    enabled: true
+    item-type: EXPERIENCE_BOTTLE
+    amount: 8-16
+    rarity: common
+    chance: 60
+    display-name: '&aФлакон опыта'
+    lore:
+      - '&7Заряженная энергия небес.'
+    enchants: {}
+
+  # Алмазные инструменты (обычные)
+  '005':
+    enabled: true
+    item-type: DIAMOND_PICKAXE
+    amount: 1
+    rarity: common
+    chance: 30
+    display-name: '&bАлмазная кирка'
+    lore:
+      - '&7Надёжный инструмент.'
+    enchants:
+      unbreaking: 2
+
+  '006':
+    enabled: true
+    item-type: DIAMOND_AXE
+    amount: 1
+    rarity: common
+    chance: 30
+    display-name: '&bАлмазный топор'
+    lore:
+      - '&7Подходит для работы.'
+    enchants:
+      unbreaking: 2
+
+  '007':
+    enabled: true
+    item-type: DIAMOND_SHOVEL
+    amount: 1
+    rarity: common
+    chance: 30
+    display-name: '&bАлмазная лопата'
+    enchants:
+      unbreaking: 2
+
+  '008':
+    enabled: true
+    item-type: DIAMOND_HOE
+    amount: 1
+    rarity: common
+    chance: 25
+    display-name: '&bАлмазная мотыга'
+    enchants:
+      unbreaking: 2
+
+
+  # ───────────────────────────────
+  #          RARE (20%)
+  # ───────────────────────────────
+
+  '101':
+    enabled: true
+    item-type: DIAMOND_SWORD
+    amount: 1
+    rarity: rare
+    chance: 20
+    display-name: '&9Метеоритный клинок'
+    lore:
+      - '&7Скован из раскалённого ядра.'
+    enchants:
+      sharpness: 4
+      unbreaking: 3
+
+  '102':
+    enabled: true
+    item-type: BOW
+    amount: 1
+    rarity: rare
+    chance: 18
+    display-name: '&9Лук Горячего Ветра'
+    lore:
+      - '&7Стрелы летят быстрее обычных.'
+    enchants:
+      power: 4
+      flame: 1
+      unbreaking: 3
+
+  '103':
+    enabled: true
+    item-type: CROSSBOW
+    amount: 1
+    rarity: rare
+    chance: 15
+    display-name: '&9Арбалет Стального Неба'
+    enchants:
+      quick_charge: 2
+      unbreaking: 3
+
+  # Алмазная броня (редкая)
+  '104':
+    enabled: true
+    item-type: DIAMOND_HELMET
+    rarity: rare
+    chance: 20
+    display-name: '&9Капюшон Рудного Сияния'
+    enchants:
+      protection: 3
+      unbreaking: 3
+
+  '105':
+    enabled: true
+    item-type: DIAMOND_CHESTPLATE
+    rarity: rare
+    chance: 18
+    display-name: '&9Кираса Каменного Сердца'
+    enchants:
+      protection: 4
+      unbreaking: 3
+
+  '106':
+    enabled: true
+    item-type: DIAMOND_LEGGINGS
+    rarity: rare
+    chance: 18
+    display-name: '&9Поножи Подземного Ветра'
+    enchants:
+      protection: 3
+      unbreaking: 3
+
+  '107':
+    enabled: true
+    item-type: DIAMOND_BOOTS
+    rarity: rare
+    chance: 18
+    display-name: '&9Сапоги Лёгкого Камня'
+    enchants:
+      protection: 3
+      unbreaking: 3
+      feather_falling: 3
+
+
+  # ───────────────────────────────
+  #          EPIC (8%)
+  # ───────────────────────────────
+
+  # Незеритовые инструменты улучшенные
+  '201':
+    enabled: true
+    item-type: NETHERITE_PICKAXE
+    rarity: epic
+    chance: 8
+    display-name: '&5Кирка Сердца Метеора'
+    lore:
+      - '&dЭпический инструмент.'
+      - '&7Сияет теплом ядра.'
+    enchants:
+      efficiency: 5
+      unbreaking: 3
+      mending: 1
+
+  '202':
+    enabled: true
+    item-type: NETHERITE_AXE
+    rarity: epic
+    chance: 7
+    display-name: '&5Топор Грозовой Пустоты'
+    enchants:
+      efficiency: 5
+      sharpness: 5
+      unbreaking: 3
+
+  '203':
+    enabled: true
+    item-type: NETHERITE_SHOVEL
+    rarity: epic
+    chance: 6
+    display-name: '&5Лопата Черного Удара'
+    enchants:
+      efficiency: 5
+      unbreaking: 3
+
+  '204':
+    enabled: true
+    item-type: NETHERITE_HOE
+    rarity: epic
+    chance: 5
+    display-name: '&5Мотыга Лунного Света'
+    enchants:
+      efficiency: 5
+      unbreaking: 3
+
+  # Незеритовая броня (эпическая)
+  '205':
+    enabled: true
+    item-type: NETHERITE_HELMET
+    rarity: epic
+    chance: 7
+    display-name: '&5Шлем Тьмы'
+    enchants:
+      protection: 4
+      unbreaking: 3
+      respiration: 2
+
+  '206':
+    enabled: true
+    item-type: NETHERITE_CHESTPLATE
+    rarity: epic
+    chance: 7
+    display-name: '&5Нагрудник Черной Мощи'
+    enchants:
+      protection: 4
+      unbreaking: 3
+
+  '207':
+    enabled: true
+    item-type: NETHERITE_LEGGINGS
+    rarity: epic
+    chance: 7
+    display-name: '&5Поножи Горячего Камня'
+    enchants:
+      protection: 4
+      unbreaking: 3
+
+  '208':
+    enabled: true
+    item-type: NETHERITE_BOOTS
+    rarity: epic
+    chance: 7
+    display-name: '&5Ботинки Пустотной Лёгкости'
+    enchants:
+      protection: 4
+      unbreaking: 3
+      soul_speed: 2
+
+
+  # ───────────────────────────────
+  #          LEGENDARY (2%)
+  # ───────────────────────────────
+
+  # Легендарная магическая космическая броня
+  '301':
+    enabled: true
+    item-type: NETHERITE_CHESTPLATE
+    rarity: legendary
+    chance: 2
+    display-name: '&6&lКосмическое Сердце'
+    lore:
+      - '&eЛегендарный предмет'
+      - '&7Окутан энергией звёзд.'
+    enchants:
+      protection: 4
+      unbreaking: 3
+      mending: 1
+      thorns: 3
+
+  # Легендарное оружие
+  '302':
+    enabled: true
+    item-type: NETHERITE_SWORD
+    rarity: legendary
+    chance: 2
+    display-name: '&6&lКлинок Пламени Звезды'
+    lore:
+      - '&eКлинок рожден в ядре метеора.'
+      - '&cОставляет за собой огненный след.'
+    enchants:
+      sharpness: 6
+      fire_aspect: 2
+      unbreaking: 3
+      mending: 1
+
+  # Легендарный тотем
+  '303':
+    enabled: true
+    item-type: TOTEM_OF_UNDYING
+    rarity: legendary
+    chance: 1
+    display-name: '&6&lТотем Космического Бессмертия'
+    lore:
+      - '&7Один шанс изменить судьбу.'
+    enchants:
+      mending: 1
+
+  # Кастомный предмет: звёздная энергия
+  '304':
+    enabled: true
+    item-type: HEART_OF_THE_SEA
+    rarity: legendary
+    chance: 1
+    display-name: '&d&lЯдро Упавшей Звезды'
+    lore:
+      - '&7Содержит неизмеримую силу.'
+    enchants:
+      luck_of_the_sea: 5
+
+# ────────────────────────────────────────────────────────────────
+#   ОХРАННИКИ
+# ────────────────────────────────────────────────────────────────
+
+enable-treasure-guardian: true
+
+possible-guardians:
+
+  'meteoriteguardian':
+    enabled: true
+    player-message: '&8[&9Охранник&8] &cТы не достоин этого сокровища!'
+    guardian-spawn-sound: ENTITY_WITHER_SPAWN
+    guardian-spawn-sound-volume: 1.0
+    guardian-spawn-sound-pitch: 0.8
+    guardian-mob-type: WITHER_SKELETON
+    chance: 10
+    guardian-display-name: '&9Охранник'
+    guardian-attack-damage: 12
+    guardian-health: 80
+    guardian-movement-speed: 0.35
+    enable-guardian-equipment: true
+    guardian-equipment:
+      main-hand: DIAMOND_SWORD
+      off-hand: SHIELD
+      helmet: NETHERITE_HELMET
+      chestplate: NETHERITE_CHESTPLATE
+      leggings: NETHERITE_LEGGINGS
+      boots: NETHERITE_BOOTS
