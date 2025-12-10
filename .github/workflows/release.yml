@@ -5,6 +5,9 @@ on:
     tags:
       - "v*.*.*"   # напр. v1.0.0
 
+permissions:
+  contents: write   # <-- ОБОВʼЯЗКОВО!
+
 jobs:
   release:
     runs-on: ubuntu-latest
