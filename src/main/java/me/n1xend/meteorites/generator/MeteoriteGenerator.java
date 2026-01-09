@@ -81,7 +81,8 @@ public class MeteoriteGenerator {
         if (world == null) return;
 
         Location coreLocation = spawnLocation.clone();
-        int surfaceY = world.getHighestBlockYAt(coreLocation.getBlockX(), coreLocation.getBlockZ());
+        // 🔧 ИСПРАВЛЕНО: используем OCEAN_FLOOR, чтобы учитывать дно под водой
+        int surfaceY = world.getHighestBlockYAt(coreLocation.getBlockX(), coreLocation.getBlockZ(), HeightMap.OCEAN_FLOOR);
         coreLocation.setY(surfaceY + 1);
 
         int outerSize = meteoriteSection.getInt("outer-layer-size", 3);
@@ -268,6 +269,9 @@ public class MeteoriteGenerator {
             if (type == Material.CHEST || type == Material.BARREL) {
                 Block block = coreLocation.getBlock();
                 block.setType(type);
+                // 🔧 ИСПРАВЛЕНО: регистрируем сундук/бочку как часть метеорита
+                addMeteoriteBlock(meteorId, block.getLocation());
+
                 if (block.getState() instanceof Container container) {
                     TreasureLoot.fillChest(container.getInventory(), configManager.getTreasureContent());
                     effects.playLootAnimation(block.getLocation());
@@ -429,6 +433,7 @@ public class MeteoriteGenerator {
                         }
                     }
                 } else {
+                    // Fallback: очистка по радиусу (на случай, если регистрация не сработала)
                     for (int dx = -radius; dx <= radius; dx++) {
                         for (int dy = -radius; dy <= radius; dy++) {
                             for (int dz = -radius; dz <= radius; dz++) {
