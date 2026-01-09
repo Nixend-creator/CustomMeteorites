@@ -1,6 +1,6 @@
 name: CustomMeteorites
 main: me.n1xend.meteorites.CustomMeteorites
-version: 1.0.0
+version: 1.0.1
 api-version: '1.20'
 author: n1xend
 description: Custom meteorites with loot, rarity, effects, radar and guardians.
