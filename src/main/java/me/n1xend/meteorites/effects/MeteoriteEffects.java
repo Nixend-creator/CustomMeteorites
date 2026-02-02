@@ -1,5 +1,6 @@
 package me.n1xend.meteorites.effects;
 
+import me.n1xend.meteorites.LangManager;
 import me.n1xend.meteorites.config.ConfigManager;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -10,19 +11,22 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList; // 🔧 ДОБАВЛЕН ИМПОРТ
 import java.util.List;
+import java.util.Random;
 
 public class MeteoriteEffects {
 
     private final JavaPlugin plugin;
     private final ConfigManager config;
+    private final LangManager langManager;
 
-    public MeteoriteEffects(JavaPlugin plugin, ConfigManager config) {
+    public MeteoriteEffects(JavaPlugin plugin, ConfigManager config, LangManager langManager) {
         this.plugin = plugin;
         this.config = config;
+        this.langManager = langManager;
     }
 
-    // 🔥 слід метеорита в атмосфері
     public void atmosphereTrail(List<FallingBlock> blocks) {
         ConfigurationSection sec = config.getAtmosphereSettings();
         if (sec == null || !sec.getBoolean("enabled", true)) return;
@@ -56,7 +60,49 @@ public class MeteoriteEffects {
         }.runTaskTimer(plugin, 0L, Math.max(1L, interval));
     }
 
-    // 🌪 ударна хвиля при падінні
+    public void startParticleEffect(List<FallingBlock> fallingBlocks, ConfigurationSection effects) {
+        for (FallingBlock fb : fallingBlocks) {
+            if (fb == null || fb.isDead()) continue;
+
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (fb.isDead()) {
+                        cancel();
+                        return;
+                    }
+
+                    List<String> keys = new ArrayList<>(effects.getKeys(false)); // ← РАБОТАЕТ С ИМПОРТОМ
+                    if (keys.isEmpty()) return;
+
+                    String key = keys.get(new Random().nextInt(keys.size()));
+                    ConfigurationSection effect = effects.getConfigurationSection(key);
+                    if (effect == null || !effect.getBoolean("enabled", true)) return;
+                    if (new Random().nextInt(100) >= effect.getInt("chance", 100)) return;
+
+                    String particleName = effect.getString("particle-effect", "FLAME");
+                    Particle particle;
+                    try {
+                        particle = Particle.valueOf(particleName.trim().toUpperCase());
+                    } catch (IllegalArgumentException ignored) {
+                        return;
+                    }
+
+                    int amount = Math.max(0, effect.getInt("amount", 1));
+                    double spread = effect.getDouble("spread", 0.1);
+                    double speed = effect.getDouble("speed", 0.05);
+
+                    World world = fb.getWorld();
+                    if (world != null) {
+                        world.spawnParticle(particle, fb.getLocation(), amount, spread, spread, spread, speed);
+                    }
+                }
+            }.runTaskTimer(plugin, 0L, Math.max(1L, config.getParticleInterval() * 2L));
+        }
+    }
+
+    // ... остальные методы без изменений (spawnShockwave, runRadar, playLootAnimation, getDirection, getSafeParticle, getSafeSound) ...
+
     public void spawnShockwave(Location center) {
         ConfigurationSection sec = config.getShockwaveSettings();
         if (sec == null || !sec.getBoolean("enabled", true)) return;
@@ -71,7 +117,6 @@ public class MeteoriteEffects {
         int slowDuration = sec.getInt("slow-duration", 60);
         int slowAmplifier = sec.getInt("slow-amplifier", 0);
 
-        // ✔ універсальний вибух — працює на всіх версіях
         w.spawnParticle(Particle.CLOUD, center, 60,
                 radius / 2, 1, radius / 2, 0.02);
 
@@ -102,14 +147,13 @@ public class MeteoriteEffects {
         }
     }
 
-    // 📡 радар метеоритів
     public void runRadar(Location impact) {
         ConfigurationSection sec = config.getRadarSettings();
         if (sec == null || !sec.getBoolean("enabled", true)) return;
 
         int radius = sec.getInt("notify-radius", 500);
         String template = sec.getString("message",
-                "&6[Метеорит] &fX:&e%x% &fZ:&e%z% &7(&a%dist%&7м, направление: &b%dir%&7)");
+                "&6[Метеорит] &fX:&e%x% &fZ:&e%z% &7(&a%dist%м&7; направление: &b%dir%&7)");
 
         World w = impact.getWorld();
         if (w == null) return;
@@ -121,14 +165,14 @@ public class MeteoriteEffects {
             if (dist > radius) continue;
 
             String dir = getDirection(p, impact);
+            String msg = langManager.processPlaceholders(template,
+                    "x", String.valueOf(impact.getBlockX()),
+                    "z", String.valueOf(impact.getBlockZ()),
+                    "dist", String.valueOf((int) dist),
+                    "dir", dir
+            );
 
-            String msg = template
-                    .replace("%x%", String.valueOf(impact.getBlockX()))
-                    .replace("%z%", String.valueOf(impact.getBlockZ()))
-                    .replace("%dist%", String.valueOf((int) dist))
-                    .replace("%dir%", dir);
-
-            p.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+            p.sendMessage(msg);
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
         }
     }
@@ -139,17 +183,16 @@ public class MeteoriteEffects {
         double angle = Math.toDegrees(Math.atan2(-dx, dz));
         if (angle < 0) angle += 360;
 
-        if (angle < 22.5 || angle >= 337.5) return "N";
-        if (angle < 67.5) return "NE";
-        if (angle < 112.5) return "E";
-        if (angle < 157.5) return "SE";
-        if (angle < 202.5) return "S";
-        if (angle < 247.5) return "SW";
-        if (angle < 292.5) return "W";
-        return "NW";
+        if (angle < 22.5 || angle >= 337.5) return langManager.getMessage("direction.north");
+        if (angle < 67.5) return langManager.getMessage("direction.northeast");
+        if (angle < 112.5) return langManager.getMessage("direction.east");
+        if (angle < 157.5) return langManager.getMessage("direction.southeast");
+        if (angle < 202.5) return langManager.getMessage("direction.south");
+        if (angle < 247.5) return langManager.getMessage("direction.southwest");
+        if (angle < 292.5) return langManager.getMessage("direction.west");
+        return langManager.getMessage("direction.northwest");
     }
 
-    // 🎉 анімація випадіння лута
     public void playLootAnimation(Location loc) {
         World w = loc.getWorld();
         if (w == null) return;
@@ -161,7 +204,6 @@ public class MeteoriteEffects {
         w.playSound(loc, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1f, 1.3f);
     }
 
-    // 🔧 безпечні методи для Particle/Sound
     private Particle getSafeParticle(String name) {
         try {
             return Particle.valueOf(name.toUpperCase());

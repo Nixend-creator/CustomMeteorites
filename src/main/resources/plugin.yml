@@ -1,14 +1,14 @@
 name: CustomMeteorites
 main: me.n1xend.meteorites.CustomMeteorites
-version: 1.0.1
+version: 2.0.0
 api-version: '1.20'
 author: n1xend
-description: Custom meteorites with loot, rarity, effects, radar and guardians.
+description: Custom meteorites with persistent cleanup, loot, effects, radar and guardians.
 
 commands:
   meteor:
     description: Meteorite management command
-    usage: /meteor <spawn|start|stop|reload> [id]
+    usage: /meteor <spawn|start|stop|reload|version> [id]
     permission: custommeteorites.admin
 
 permissions:

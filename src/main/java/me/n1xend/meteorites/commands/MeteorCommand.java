@@ -1,6 +1,7 @@
 package me.n1xend.meteorites.commands;
 
 import me.n1xend.meteorites.CustomMeteorites;
+import me.n1xend.meteorites.LangManager;
 import me.n1xend.meteorites.config.ConfigManager;
 import me.n1xend.meteorites.generator.MeteoriteGenerator;
 import org.bukkit.Location;
@@ -14,13 +15,16 @@ public class MeteorCommand implements CommandExecutor {
     private final CustomMeteorites plugin;
     private final ConfigManager configManager;
     private final MeteoriteGenerator generator;
+    private final LangManager langManager;
 
     public MeteorCommand(CustomMeteorites plugin,
                          ConfigManager configManager,
-                         MeteoriteGenerator generator) {
+                         MeteoriteGenerator generator,
+                         LangManager langManager) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.generator = generator;
+        this.langManager = langManager;
     }
 
     @Override
@@ -30,7 +34,7 @@ public class MeteorCommand implements CommandExecutor {
                              String[] args) {
 
         if (!sender.hasPermission("custommeteorites.admin")) {
-            sender.sendMessage("§cУ вас нет прав.");
+            sender.sendMessage(langManager.getMessage("command.no_permission"));
             return true;
         }
 
@@ -42,45 +46,75 @@ public class MeteorCommand implements CommandExecutor {
         switch (args[0].toLowerCase()) {
             case "spawn" -> {
                 if (!(sender instanceof Player p)) {
-                    sender.sendMessage("§cТолько игрок может вызывать метеорит.");
+                    sender.sendMessage(langManager.getMessage("command.players_only"));
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage("§cИспользование: /meteor spawn <id>");
+                    sender.sendMessage(langManager.getMessage("command.spawn.usage"));
                     return true;
                 }
                 String id = args[1];
+                var meteoritesSection = configManager.getMeteoritesConfig();
+                if (meteoritesSection == null || meteoritesSection.getConfigurationSection(id) == null) {
+                    sender.sendMessage(langManager.getMessage("command.spawn.not_found", "id", id));
+                    return true;
+                }
                 Location loc = p.getLocation();
                 generator.createMeteoriteAt(loc, id);
-                sender.sendMessage("§aМетеорит '" + id + "' вызван.");
+                sender.sendMessage(langManager.getMessage("command.spawn.success", "id", id));
             }
 
             case "reload" -> {
-                configManager.reload();
-                sender.sendMessage("§aconfig.yml перезагружен.");
+                try {
+                    configManager.reload();
+                    langManager.reload();
+                    sender.sendMessage(langManager.getMessage("command.reload.success"));
+                } catch (Exception e) {
+                    sender.sendMessage(langManager.getMessage("command.reload.failed"));
+                    plugin.getLogger().severe("Reload failed: " + e.getMessage());
+                }
             }
 
             case "start" -> {
-                plugin.startRandomMeteorites();
-                sender.sendMessage("§aСлучайные метеориты запущены.");
+                if (plugin.getRandomMeteorTask() != null && !plugin.getRandomMeteorTask().isCancelled()) {
+                    sender.sendMessage(langManager.getMessage("command.start.already_running"));
+                } else {
+                    plugin.startRandomMeteorites();
+                    sender.sendMessage(langManager.getMessage("command.start.success"));
+                }
             }
 
             case "stop" -> {
-                plugin.stopRandomMeteorites();
-                sender.sendMessage("§aСлучайные метеориты остановлены.");
+                if (plugin.getRandomMeteorTask() == null || plugin.getRandomMeteorTask().isCancelled()) {
+                    sender.sendMessage(langManager.getMessage("command.stop.not_running"));
+                } else {
+                    plugin.stopRandomMeteorites();
+                    sender.sendMessage(langManager.getMessage("command.stop.success"));
+                }
             }
 
-            default -> sendHelp(sender);
+            case "version" -> {
+                sender.sendMessage(langManager.getMessage("command.version.info",
+                        "version", CustomMeteorites.VERSION));
+            }
+
+            default -> {
+                sender.sendMessage(langManager.getMessage("command.unknown"));
+                sendHelp(sender);
+            }
         }
 
         return true;
     }
 
     private void sendHelp(CommandSender s) {
-        s.sendMessage("§eCustomMeteorites команды:");
-        s.sendMessage("§e/meteor spawn <id> §7- вызвать метеорит");
-        s.sendMessage("§e/meteor start §7- запустить случайные метеориты");
-        s.sendMessage("§e/meteor stop §7- остановить случайные метеориты");
-        s.sendMessage("§e/meteor reload §7- перезагрузить config.yml");
+        s.sendMessage(langManager.getMessage("command.help.header"));
+        s.sendMessage(langManager.getMessage("command.help.title"));
+        s.sendMessage(langManager.getMessage("command.help.spawn"));
+        s.sendMessage(langManager.getMessage("command.help.start"));
+        s.sendMessage(langManager.getMessage("command.help.stop"));
+        s.sendMessage(langManager.getMessage("command.help.reload"));
+        s.sendMessage(langManager.getMessage("command.help.version"));
+        s.sendMessage(langManager.getMessage("command.help.footer"));
     }
 }

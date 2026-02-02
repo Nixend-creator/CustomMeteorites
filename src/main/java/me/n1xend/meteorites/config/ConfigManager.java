@@ -9,124 +9,68 @@ import java.io.File;
 import java.io.IOException;
 
 public class ConfigManager {
-
     private final JavaPlugin plugin;
     private FileConfiguration config;
     private File configFile;
 
-    public ConfigManager(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
+    public ConfigManager(JavaPlugin plugin) { this.plugin = plugin; }
 
     public void loadConfig() {
         configFile = new File(plugin.getDataFolder(), "config.yml");
-        if (!configFile.exists()) {
-            plugin.saveResource("config.yml", false);
-        }
+        if (!configFile.exists()) plugin.saveResource("config.yml", false);
         config = YamlConfiguration.loadConfiguration(configFile);
     }
 
-    public void reload() {
-        loadConfig();
-    }
+    public void reload() { loadConfig(); }
 
     public void saveConfig() {
         if (config == null || configFile == null) return;
-        try {
-            config.save(configFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Не удалось сохранить config.yml: " + e.getMessage());
-        }
+        try { config.save(configFile); }
+        catch (IOException e) { plugin.getLogger().severe("Failed to save config.yml: " + e.getMessage()); }
     }
 
-    public FileConfiguration getRawConfig() {
-        return config;
-    }
+    public FileConfiguration getRawConfig() { return config; }
 
-    // --- Рандомні метеорити ---
-    public boolean isRandomMeteoritesEnabled() {
-        return config.getBoolean("enable-random-meteorites", true);
-    }
+    // === ГЛОБАЛЬНЫЕ НАСТРОЙКИ ===
+    public boolean isRandomMeteoritesEnabled() { return config.getBoolean("settings.enable-random-meteorites", true); }
+    public int getInterval() { return config.getInt("settings.random-meteorite-interval", 10800); }
+    public String getTargetWorldName() { return config.getString("settings.random-meteorite-world", "world"); }
+    public int getMaxSpawnX() { return config.getInt("settings.spawn-area.max-x", 2500); }
+    public int getMaxSpawnZ() { return config.getInt("settings.spawn-area.max-z", 2500); }
+    public int getMinSpawnX() { return config.getInt("settings.spawn-area.min-x", -2500); }
+    public int getMinSpawnZ() { return config.getInt("settings.spawn-area.min-z", -2500); }
+    public int getSpawnHeight() { return config.getInt("settings.spawn-height", 150); }
+    public int getCleanupRadius() { return config.getInt("settings.cleanup-radius", 8); }
 
-    public int getInterval() {
-        return config.getInt("random-meteorite-interval", 7200);
-    }
+    // === МЕТЕОРИТЫ ===
+    public ConfigurationSection getMeteoritesConfig() { return config.getConfigurationSection("meteorites"); }
 
-    public String getTargetWorldName() {
-        return config.getString("random-meteorite-world", "world");
-    }
+    // === ВЗРЫВЫ ===
+    public ConfigurationSection getCoreSettings() { return config.getConfigurationSection("explosions.core"); }
+    public ConfigurationSection getInnerLayerSettings() { return config.getConfigurationSection("explosions.inner-layer"); }
+    public ConfigurationSection getOuterLayerSettings() { return config.getConfigurationSection("explosions.outer-layer"); }
 
-    public int getMaxSpawnX() { return config.getInt("random-meteorite-max-spawn-x-coord", 2500); }
-    public int getMaxSpawnZ() { return config.getInt("random-meteorite-max-spawn-z-coord", 2500); }
-    public int getMinSpawnX() { return config.getInt("random-meteorite-min-spawn-x-coord", -2500); }
-    public int getMinSpawnZ() { return config.getInt("random-meteorite-min-spawn-z-coord", -2500); }
-    public int getSpawnHeight() { return config.getInt("random-meteorite-spawn-height", 150); }
+    // === ЧАСТИЦЫ ===
+    public boolean areParticlesEnabled() { return config.getBoolean("particles.enabled", true); }
+    public int getParticleInterval() { return config.getInt("particles.interval", 5); }
+    public ConfigurationSection getParticleEffects() { return config.getConfigurationSection("particles.effects"); }
 
-    // --- Метеорити ---
-    public ConfigurationSection getMeteoritesConfig() {
-        return config.getConfigurationSection("meteorites");
-    }
+    // === СОКРОВИЩА ===
+    public boolean isTreasureEnabled() { return config.getBoolean("treasure.enabled", true); }
+    public String getTreasureType() { return config.getString("treasure.container-type", "CHEST"); }
 
-    // --- Вибухи/шари ---
-    public ConfigurationSection getCoreSettings() {
-        return config.getConfigurationSection("core-settings");
-    }
+    public ConfigurationSection getTreasureContent() { return config.getConfigurationSection("treasure.items"); }
 
-    public ConfigurationSection getInnerLayerSettings() {
-        return config.getConfigurationSection("inner-layer-settings");
-    }
+    // === ОХРАННИКИ ===
+    public boolean isGuardianEnabled() { return config.getBoolean("guardians.enabled", true); }
+    public ConfigurationSection getPossibleGuardians() { return config.getConfigurationSection("guardians.types"); }
 
-    public ConfigurationSection getOuterLayerSettings() {
-        return config.getConfigurationSection("outer-layer-settings");
-    }
+    // === АТМОСФЕРА ===
+    public ConfigurationSection getAtmosphereSettings() { return config.getConfigurationSection("atmosphere"); }
 
-    // --- Частинки ---
-    public boolean areParticlesEnabled() {
-        return config.getBoolean("enable-meteorite-particles", true);
-    }
+    // === УДАРНАЯ ВОЛНА ===
+    public ConfigurationSection getShockwaveSettings() { return config.getConfigurationSection("shockwave"); }
 
-    public int getParticleInterval() {
-        return config.getInt("meteorite-particle-interval", 5);
-    }
-
-    public ConfigurationSection getParticleEffects() {
-        return config.getConfigurationSection("possible-meteorite-particle-effects");
-    }
-
-    // --- Скарби ---
-    public boolean isTreasureEnabled() {
-        return config.getBoolean("enable-meteorite-treasure", true);
-    }
-
-    public String getTreasureType() {
-        return config.getString("treasure-barrel-or-chest", "CHEST");
-    }
-
-    public ConfigurationSection getTreasureContent() {
-        return config.getConfigurationSection("treasure-content");
-    }
-
-    // --- Охоронці ---
-    public boolean isGuardianEnabled() {
-        return config.getBoolean("enable-treasure-guardian", true);
-    }
-
-    public ConfigurationSection getPossibleGuardians() {
-        return config.getConfigurationSection("possible-guardians");
-    }
-
-    // --- Атмосфера ---
-    public ConfigurationSection getAtmosphereSettings() {
-        return config.getConfigurationSection("atmosphere-effect");
-    }
-
-    // --- Ударна хвиля ---
-    public ConfigurationSection getShockwaveSettings() {
-        return config.getConfigurationSection("impact-shockwave");
-    }
-
-    // --- Радар ---
-    public ConfigurationSection getRadarSettings() {
-        return config.getConfigurationSection("meteorite-radar");
-    }
+    // === РАДАР ===
+    public ConfigurationSection getRadarSettings() { return config.getConfigurationSection("radar"); }
 }

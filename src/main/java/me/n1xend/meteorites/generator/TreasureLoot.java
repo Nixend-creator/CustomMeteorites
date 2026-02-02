@@ -1,5 +1,6 @@
 package me.n1xend.meteorites.generator;
 
+import me.n1xend.meteorites.LangManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -17,7 +18,7 @@ public class TreasureLoot {
 
     private static final Random RANDOM = new Random();
 
-    public static void fillChest(Inventory inventory, ConfigurationSection lootTable) {
+    public static void fillChest(Inventory inventory, ConfigurationSection lootTable, LangManager langManager) {
         if (lootTable == null) return;
 
         List<ItemStack> items = new ArrayList<>();
@@ -30,16 +31,17 @@ public class TreasureLoot {
             double chance = entry.getDouble("chance", 100.0);
             if (RANDOM.nextDouble() * 100.0 > chance) continue;
 
-            ItemStack item = createItem(entry);
+            ItemStack item = createItem(entry, langManager);
             if (item != null) items.add(item);
         }
 
+        Collections.shuffle(items);
         for (ItemStack item : items) {
             inventory.addItem(item);
         }
     }
 
-    private static ItemStack createItem(ConfigurationSection entry) {
+    private static ItemStack createItem(ConfigurationSection entry, LangManager langManager) {
         String materialName = entry.getString("item-type");
         if (materialName == null) return null;
         Material mat = Material.matchMaterial(materialName.toUpperCase());
@@ -89,7 +91,7 @@ public class TreasureLoot {
                     .collect(Collectors.toList());
         }
         coloredLore.add("");
-        coloredLore.add(getRarityTag(rarity));
+        coloredLore.add(getRarityTag(rarity, langManager));
         meta.setLore(coloredLore);
 
         if (entry.getBoolean("unbreakable", false)) {
@@ -97,7 +99,7 @@ public class TreasureLoot {
             meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
         }
 
-        // 🔧 ЗАЧАРОВАНИЯ — БЕЗ СКРЫТИЯ!
+        // Зачарования — ВИДИМЫЕ (как в ванильном столе)
         ConfigurationSection enchants = entry.getConfigurationSection("enchants");
         if (enchants != null) {
             for (String enchantKey : enchants.getKeys(false)) {
@@ -107,8 +109,7 @@ public class TreasureLoot {
                 if (level <= 0) continue;
                 meta.addEnchant(ench, level, true);
             }
-            // ❌ УДАЛЕНО: meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            // Теперь зачарования видны, как после ванильного стола зачарования.
+            // НЕ скрываем зачарования — они должны быть видны!
         }
 
         if (meta instanceof LeatherArmorMeta leatherMeta) {
@@ -124,12 +125,12 @@ public class TreasureLoot {
         return item;
     }
 
-    private static String getRarityTag(String rarity) {
+    private static String getRarityTag(String rarity, LangManager langManager) {
         return switch (rarity) {
-            case "rare" -> ChatColor.BLUE + "Редкость: РЕДКИЙ";
-            case "epic" -> ChatColor.DARK_PURPLE + "Редкость: ЭПИЧЕСКИЙ";
-            case "legendary" -> ChatColor.GOLD + "Редкость: ЛЕГЕНДАРНЫЙ";
-            default -> ChatColor.GRAY + "Редкость: ОБЫЧНЫЙ";
+            case "rare" -> ChatColor.BLUE + langManager.getMessage("loot.rarity.rare");
+            case "epic" -> ChatColor.DARK_PURPLE + langManager.getMessage("loot.rarity.epic");
+            case "legendary" -> ChatColor.GOLD + langManager.getMessage("loot.rarity.legendary");
+            default -> ChatColor.GRAY + langManager.getMessage("loot.rarity.common");
         };
     }
 }

@@ -1,5 +1,8 @@
 package me.n1xend.meteorites.generator;
 
+import me.n1xend.meteorites.CustomMeteorites;
+import me.n1xend.meteorites.LangManager;
+import me.n1xend.meteorites.MeteoriteManager;
 import me.n1xend.meteorites.config.ConfigManager;
 import me.n1xend.meteorites.effects.MeteoriteEffects;
 import me.n1xend.meteorites.listener.MeteoriteBlockListener;
@@ -25,45 +28,49 @@ public class MeteoriteGenerator {
 
     private final JavaPlugin plugin;
     private final ConfigManager configManager;
+    private final LangManager langManager;
     private final MeteoriteEffects effects;
     private final Random random = new Random();
 
     private final Map<Integer, BukkitTask> cleanupTasks = new HashMap<>();
     private final Map<Integer, Set<Location>> meteoriteBlocks = new HashMap<>();
 
-    public MeteoriteGenerator(JavaPlugin plugin, ConfigManager configManager) {
+    public MeteoriteGenerator(JavaPlugin plugin, ConfigManager configManager, LangManager langManager) {
         this.plugin = plugin;
         this.configManager = configManager;
-        this.effects = new MeteoriteEffects(plugin, configManager);
+        this.langManager = langManager;
+        this.effects = new MeteoriteEffects(plugin, configManager, langManager);
     }
 
     public void createMeteoriteAt(Location spawnLocation, String meteoriteId) {
         if (meteoriteId == null) {
-            plugin.getLogger().warning("Попытка создать метеорит с null ID!");
+            plugin.getLogger().warning(langManager.getMessage("error.null_meteorite_id"));
             return;
         }
 
         ConfigurationSection meteoritesSection = configManager.getMeteoritesConfig();
         if (meteoritesSection == null) {
-            plugin.getLogger().severe("Секция 'meteorites' отсутствует в config.yml!");
+            plugin.getLogger().severe(langManager.getMessage("error.no_meteorites_section"));
             return;
         }
 
         ConfigurationSection meteoriteSection = meteoritesSection.getConfigurationSection(meteoriteId);
         if (meteoriteSection == null) {
-            plugin.getLogger().severe("Конфиг для метеорита '" + meteoriteId + "' не найден!");
+            plugin.getLogger().severe(langManager.getMessage("error.meteorite_not_found", "id", meteoriteId));
             return;
         }
 
-        String message = meteoriteSection.getString("chat-message",
-                "&6[Метеориты]&f Метеорит был замечен!");
+        // Отправка сообщения о спавне через локализацию
+        String message = meteoriteSection.getString("chat-message");
         if (message != null && !message.trim().isEmpty()) {
-            message = message
-                    .replace("%x%", String.valueOf(spawnLocation.getBlockX()))
-                    .replace("%z%", String.valueOf(spawnLocation.getBlockZ()));
-            Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', message));
+            message = langManager.processPlaceholders(message,
+                    "x", String.valueOf(spawnLocation.getBlockX()),
+                    "z", String.valueOf(spawnLocation.getBlockZ())
+            );
+            Bukkit.broadcastMessage(message);
         }
 
+        // Выполнение команд при спавне
         List<String> spawnCommands = meteoriteSection.getStringList("meteorite-spawn-commands");
         if (spawnCommands != null) {
             for (String cmd : spawnCommands) {
@@ -71,17 +78,19 @@ public class MeteoriteGenerator {
                     Bukkit.dispatchCommand(
                             Bukkit.getConsoleSender(),
                             cmd.replace("%x%", String.valueOf(spawnLocation.getBlockX()))
-                               .replace("%z%", String.valueOf(spawnLocation.getBlockZ()))
+                                    .replace("%z%", String.valueOf(spawnLocation.getBlockZ()))
                     );
                 }
             }
         }
 
         World world = spawnLocation.getWorld();
-        if (world == null) return;
+        if (world == null) {
+            plugin.getLogger().warning(langManager.getMessage("error.world_null"));
+            return;
+        }
 
         Location coreLocation = spawnLocation.clone();
-        // 🔧 ИСПРАВЛЕНО: используем OCEAN_FLOOR, чтобы учитывать дно под водой
         int surfaceY = world.getHighestBlockYAt(coreLocation.getBlockX(), coreLocation.getBlockZ(), HeightMap.OCEAN_FLOOR);
         coreLocation.setY(surfaceY + 1);
 
@@ -120,6 +129,12 @@ public class MeteoriteGenerator {
         int meteorId = random.nextInt(Integer.MAX_VALUE);
         meteoriteBlocks.putIfAbsent(meteorId, new HashSet<>());
 
+        // Сбор всех материалов метеорита для персистентной очистки
+        Set<String> allMaterials = new HashSet<>();
+        if (coreBlocksSec != null) allMaterials.addAll(coreBlocksSec.getKeys(false));
+        if (innerBlocksSec != null) allMaterials.addAll(innerBlocksSec.getKeys(false));
+        if (outerBlocksSec != null) allMaterials.addAll(outerBlocksSec.getKeys(false));
+
         List<FallingBlock> fallingBlocks = new ArrayList<>();
         fallingBlocks.addAll(createLayer(corePositions, coreBlocksSec, world, meteorId));
         fallingBlocks.addAll(createLayer(innerPositions, innerBlocksSec, world, meteorId));
@@ -135,6 +150,8 @@ public class MeteoriteGenerator {
             );
             fb.setVelocity(velocity);
             fb.setDropItem(false);
+            fb.setMetadata(MeteoriteBlockListener.METEOR_META_KEY,
+                    new FixedMetadataValue(plugin, meteorId));
         }
 
         effects.atmosphereTrail(fallingBlocks);
@@ -142,12 +159,12 @@ public class MeteoriteGenerator {
         if (configManager.areParticlesEnabled() && !fallingBlocks.isEmpty()) {
             ConfigurationSection particleEffects = configManager.getParticleEffects();
             if (particleEffects != null) {
-                startParticleEffect(fallingBlocks, particleEffects);
+                effects.startParticleEffect(fallingBlocks, particleEffects);
             }
         }
 
         int cleanupInterval = meteoriteSection.getInt("clean-up-meteorite-blocks-interval", 0);
-        scheduleImpactHandling(coreLocation, meteoriteSection, cleanupInterval, meteorId);
+        scheduleImpactHandling(coreLocation, meteoriteSection, cleanupInterval, meteorId, allMaterials);
     }
 
     private List<FallingBlock> createLayer(List<Location> positions,
@@ -168,7 +185,7 @@ public class MeteoriteGenerator {
                         new FixedMetadataValue(plugin, meteorId));
                 blocks.add(fb);
             } catch (Exception e) {
-                plugin.getLogger().warning("Ошибка спавна FallingBlock на " + loc + ": " + e.getMessage());
+                plugin.getLogger().warning(langManager.getMessage("error.falling_block_spawn") + " " + loc + ": " + e.getMessage());
             }
         }
         return blocks;
@@ -188,51 +205,11 @@ public class MeteoriteGenerator {
         return pool.get(random.nextInt(pool.size()));
     }
 
-    private void startParticleEffect(List<FallingBlock> fallingBlocks, ConfigurationSection effects) {
-        for (FallingBlock fb : fallingBlocks) {
-            if (fb == null || fb.isDead()) continue;
-
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (fb.isDead()) {
-                        cancel();
-                        return;
-                    }
-
-                    List<String> keys = new ArrayList<>(effects.getKeys(false));
-                    if (keys.isEmpty()) return;
-
-                    String key = keys.get(random.nextInt(keys.size()));
-                    ConfigurationSection effect = effects.getConfigurationSection(key);
-                    if (effect == null || !effect.getBoolean("enabled", true)) return;
-                    if (random.nextInt(100) >= effect.getInt("chance", 100)) return;
-
-                    String particleName = effect.getString("particle-effect", "FLAME");
-                    Particle particle;
-                    try {
-                        particle = Particle.valueOf(particleName.trim().toUpperCase());
-                    } catch (IllegalArgumentException ignored) {
-                        return;
-                    }
-
-                    int amount = Math.max(0, effect.getInt("amount", 1));
-                    double spread = effect.getDouble("spread", 0.1);
-                    double speed = effect.getDouble("speed", 0.05);
-
-                    World world = fb.getWorld();
-                    if (world != null) {
-                        world.spawnParticle(particle, fb.getLocation(), amount, spread, spread, spread, speed);
-                    }
-                }
-            }.runTaskTimer(plugin, 0L, Math.max(1L, configManager.getParticleInterval() * 2L));
-        }
-    }
-
     private void scheduleImpactHandling(Location coreLocation,
                                         ConfigurationSection meteoriteSection,
                                         int cleanupInterval,
-                                        int meteorId) {
+                                        int meteorId,
+                                        Set<String> allMaterials) {
         double spawnHeight = configManager.getSpawnHeight();
         double speed = meteoriteSection.getDouble("meteorite-speed", 2.0);
         int fallTicks = Math.max(20,
@@ -240,6 +217,13 @@ public class MeteoriteGenerator {
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             handleImpact(coreLocation, meteoriteSection, meteorId);
+
+            // 🔥 РЕГИСТРАЦИЯ ДЛЯ ПЕРСИСТЕНТНОЙ ОЧИСТКИ
+            if (plugin instanceof CustomMeteorites customPlugin && customPlugin.getMeteoriteManager() != null) {
+                customPlugin.getMeteoriteManager().registerMeteorite(coreLocation, cleanupInterval, allMaterials);
+            }
+
+            // Старая система очистки как fallback
             if (cleanupInterval > 0) {
                 int radius = meteoriteSection.getInt("outer-layer-size", 3);
                 scheduleCleanup(coreLocation, radius, cleanupInterval, meteorId);
@@ -269,11 +253,10 @@ public class MeteoriteGenerator {
             if (type == Material.CHEST || type == Material.BARREL) {
                 Block block = coreLocation.getBlock();
                 block.setType(type);
-                // 🔧 ИСПРАВЛЕНО: регистрируем сундук/бочку как часть метеорита
                 addMeteoriteBlock(meteorId, block.getLocation());
 
                 if (block.getState() instanceof Container container) {
-                    TreasureLoot.fillChest(container.getInventory(), configManager.getTreasureContent());
+                    TreasureLoot.fillChest(container.getInventory(), configManager.getTreasureContent(), langManager);
                     effects.playLootAnimation(block.getLocation());
                 }
             }
@@ -283,10 +266,12 @@ public class MeteoriteGenerator {
             spawnGuardian(coreLocation);
         }
 
+        // Сообщение об ударе через локализацию
         if (coreSet != null) {
-            String msg = coreSet.getString("message", "");
-            if (msg != null && !msg.trim().isEmpty()) {
-                Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', msg));
+            String msgKey = "impact.message";
+            String msg = langManager.getMessage(msgKey);
+            if (!msg.contains("MISSING") && !msg.trim().isEmpty()) {
+                Bukkit.broadcastMessage(msg);
             }
         }
 
@@ -331,7 +316,7 @@ public class MeteoriteGenerator {
         try {
             type = EntityType.valueOf(data.getString("guardian-mob-type", "ZOMBIE").trim().toUpperCase());
         } catch (Exception e) {
-            plugin.getLogger().warning("Неверный тип моба: " + data.getString("guardian-mob-type"));
+            plugin.getLogger().warning(langManager.getMessage("error.invalid_mob_type", "type", data.getString("guardian-mob-type")));
             return;
         }
 
@@ -386,10 +371,11 @@ public class MeteoriteGenerator {
 
         String msg = data.getString("player-message");
         if (msg != null && !msg.isEmpty()) {
+            msg = langManager.processPlaceholders(msg);
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p.getWorld() == coreLocation.getWorld()
                         && p.getLocation().distance(spawn) < 10) {
-                    p.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+                    p.sendMessage(msg);
                 }
             }
         }
@@ -402,7 +388,7 @@ public class MeteoriteGenerator {
                 float pitch = (float) data.getDouble("guardian-spawn-sound-pitch", 1.0);
                 coreLocation.getWorld().playSound(spawn, sound, vol, pitch);
             } catch (Exception e) {
-                plugin.getLogger().warning("Неверный звук: " + soundName);
+                plugin.getLogger().warning(langManager.getMessage("error.invalid_sound", "sound", soundName));
             }
         }
     }
@@ -433,7 +419,7 @@ public class MeteoriteGenerator {
                         }
                     }
                 } else {
-                    // Fallback: очистка по радиусу (на случай, если регистрация не сработала)
+                    // Fallback: очистка по радиусу
                     for (int dx = -radius; dx <= radius; dx++) {
                         for (int dy = -radius; dy <= radius; dy++) {
                             for (int dz = -radius; dz <= radius; dz++) {
@@ -450,7 +436,7 @@ public class MeteoriteGenerator {
                 }
 
                 cleanupTasks.remove(getTaskId());
-                plugin.getLogger().info("Блоки метеорита очищены (ID: " + meteorId + ").");
+                plugin.getLogger().info(langManager.getMessage("cleanup.fallback_cleaned", "id", String.valueOf(meteorId)));
             }
         };
 
@@ -469,5 +455,25 @@ public class MeteoriteGenerator {
         }
         cleanupTasks.clear();
         meteoriteBlocks.clear();
+    }
+
+    public Location findRandomSpawnLocation() {
+        String worldName = configManager.getTargetWorldName();
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            plugin.getLogger().warning(langManager.getMessage("error.world_not_found", "location", worldName));
+            return null;
+        }
+
+        int minX = configManager.getMinSpawnX();
+        int maxX = configManager.getMaxSpawnX();
+        int minZ = configManager.getMinSpawnZ();
+        int maxZ = configManager.getMaxSpawnZ();
+        int y = configManager.getSpawnHeight();
+
+        int x = random.nextInt(maxX - minX + 1) + minX;
+        int z = random.nextInt(maxZ - minZ + 1) + minZ;
+
+        return new Location(world, x + 0.5, y, z + 0.5);
     }
 }

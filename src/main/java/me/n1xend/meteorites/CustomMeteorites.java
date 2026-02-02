@@ -7,28 +7,35 @@ import me.n1xend.meteorites.listener.MeteoriteBlockListener;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class CustomMeteorites extends JavaPlugin {
 
+    public static final String VERSION = "2.0.0";
     private ConfigManager configManager;
+    private LangManager langManager;
     private MeteoriteGenerator meteoriteGenerator;
-    private BukkitTask randomMeteorTask;
+    private MeteoriteManager meteoriteManager;
+    private BukkitTask randomMeteorTask; // ← ПОЛЕ ЗАДАЧИ
     private final Random random = new Random();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigurationSerialization.registerClass(MeteoriteData.class);
+
+        langManager = new LangManager(this);
+        langManager.loadLanguages();
 
         configManager = new ConfigManager(this);
         configManager.loadConfig();
 
-        meteoriteGenerator = new MeteoriteGenerator(this, configManager);
+        meteoriteManager = new MeteoriteManager(this);
+        meteoriteGenerator = new MeteoriteGenerator(this, configManager, langManager);
 
         getServer().getPluginManager().registerEvents(
                 new MeteoriteBlockListener(this, meteoriteGenerator),
@@ -36,14 +43,14 @@ public class CustomMeteorites extends JavaPlugin {
         );
 
         getCommand("meteor").setExecutor(
-                new MeteorCommand(this, configManager, meteoriteGenerator)
+                new MeteorCommand(this, configManager, meteoriteGenerator, langManager)
         );
 
         if (configManager.isRandomMeteoritesEnabled()) {
             startRandomMeteorites();
         }
 
-        getLogger().info("[CustomMeteorites] Enabled");
+        getLogger().info(langManager.getMessage("plugin.enabled", "version", VERSION));
     }
 
     @Override
@@ -52,10 +59,11 @@ public class CustomMeteorites extends JavaPlugin {
         if (meteoriteGenerator != null) {
             meteoriteGenerator.cancelCleanupTasks();
         }
-        getLogger().info("[CustomMeteorites] Disabled");
+        if (meteoriteManager != null) {
+            meteoriteManager.shutdown();
+        }
+        getLogger().info(langManager.getMessage("plugin.disabled"));
     }
-
-    // === Рандомні метеорити ===
 
     public void startRandomMeteorites() {
         if (randomMeteorTask != null && !randomMeteorTask.isCancelled()) return;
@@ -67,39 +75,29 @@ public class CustomMeteorites extends JavaPlugin {
                 interval * 20L,
                 interval * 20L
         );
-        getLogger().info("[CustomMeteorites] Random meteorites started (interval " + interval + "s).");
+        getLogger().info(langManager.getMessage("random.enabled", "interval", String.valueOf(interval)));
     }
 
     public void stopRandomMeteorites() {
         if (randomMeteorTask != null) {
             randomMeteorTask.cancel();
             randomMeteorTask = null;
-            getLogger().info("[CustomMeteorites] Random meteorites stopped.");
+            getLogger().info(langManager.getMessage("random.disabled"));
         }
     }
 
+    // 🔧 ДОБАВЛЕН ГЕТТЕР ДЛЯ ДОСТУПА ИЗ КОМАНД
+    public BukkitTask getRandomMeteorTask() {
+        return randomMeteorTask;
+    }
+
     private void spawnRandomMeteorite() {
-        String worldName = configManager.getTargetWorldName();
-        World world = Bukkit.getWorld(worldName);
-        if (world == null) {
-            getLogger().warning("[CustomMeteorites] World '" + worldName + "' not found.");
-            return;
-        }
-
-        int minX = configManager.getMinSpawnX();
-        int maxX = configManager.getMaxSpawnX();
-        int minZ = configManager.getMinSpawnZ();
-        int maxZ = configManager.getMaxSpawnZ();
-        int y = configManager.getSpawnHeight();
-
-        int x = randomInt(minX, maxX);
-        int z = randomInt(minZ, maxZ);
-
-        Location loc = new Location(world, x + 0.5, y, z + 0.5);
+        var loc = meteoriteGenerator.findRandomSpawnLocation();
+        if (loc == null) return;
 
         String meteorId = pickRandomMeteoriteId();
         if (meteorId == null) {
-            getLogger().warning("[CustomMeteorites] No meteorites configured in config.yml");
+            getLogger().warning(langManager.getMessage("error.no_meteorites_configured"));
             return;
         }
 
@@ -108,7 +106,7 @@ public class CustomMeteorites extends JavaPlugin {
 
     private String pickRandomMeteoriteId() {
         var section = configManager.getMeteoritesConfig();
-        if (section == null) return null;
+        if (section == null || section.getKeys(false).isEmpty()) return null;
 
         List<String> ids = new ArrayList<>();
         List<Integer> weights = new ArrayList<>();
@@ -138,11 +136,8 @@ public class CustomMeteorites extends JavaPlugin {
         return min + random.nextInt(max - min + 1);
     }
 
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public MeteoriteGenerator getMeteoriteGenerator() {
-        return meteoriteGenerator;
-    }
+    public ConfigManager getConfigManager() { return configManager; }
+    public LangManager getLangManager() { return langManager; }
+    public MeteoriteGenerator getMeteoriteGenerator() { return meteoriteGenerator; }
+    public MeteoriteManager getMeteoriteManager() { return meteoriteManager; }
 }

@@ -1,0 +1,77 @@
+# ================================================================
+#   ENGLISH LOCALIZATION v2.0.0
+# ================================================================
+
+plugin:
+  enabled: '&a[CustomMeteorites] Plugin version %version% loaded successfully!'
+  disabled: '&c[CustomMeteorites] Plugin disabled.'
+
+random:
+  enabled: '&aRandom meteorites started (interval: %interval% sec).'
+  disabled: '&cRandom meteorites stopped.'
+
+cleanup:
+  skipped_expired: 'Skipped expired meteorite.'
+  restored: 'Restored meteorite [%uuid%] at %location% (remaining: %minutes% min).'
+  registered: 'Registered meteorite [%uuid%] at %location% (cleanup in %minutes% min).'
+  removed_blocks: 'Cleaned %count% blocks of meteorite [%uuid%].'
+  watcher_cleaned: 'Cleaned %count% expired meteorites via watcher.'
+  fallback_cleaned: 'Cleaned meteorite blocks (ID: %id%) via fallback system.'
+
+error:
+  null_meteorite_id: 'Attempt to create meteorite with null ID!'
+  no_meteorites_section: 'Section ''meteorites'' missing in config.yml!'
+  meteorite_not_found: 'Config for meteorite ''%id%'' not found!'
+  world_null: 'World for meteorite spawn not found!'
+  falling_block_spawn: 'Error spawning FallingBlock'
+  invalid_mob_type: 'Invalid mob type: %type%'
+  invalid_sound: 'Invalid sound: %sound%'
+  world_not_found: 'World not found: %location%'
+  no_materials: 'No materials for cleaning meteorite [%uuid%]'
+  loading_meteorite: 'Error loading meteorite'
+  critical_loading: 'Critical error loading active_meteorites.yml'
+  duplicate_meteorite: 'Duplicate meteorite attempt at %location% — cancelled'
+  no_meteorites_configured: 'No meteorites configured in config!'
+
+impact:
+  message: '&6[Meteorites] &eMeteorite impacted!'
+
+direction:
+  north: 'N'
+  northeast: 'NE'
+  east: 'E'
+  southeast: 'SE'
+  south: 'S'
+  southwest: 'SW'
+  west: 'W'
+  northwest: 'NW'
+
+loot:
+  rarity:
+    common: 'Rarity: COMMON'
+    rare: 'Rarity: RARE'
+    epic: 'Rarity: EPIC'
+    legendary: 'Rarity: LEGENDARY'
+
+command:
+  no_permission: '&cYou do not have permission to use this command.'
+  players_only: '&cOnly players can execute this command.'
+  spawn:
+    usage: '&cUsage: /meteor spawn <id>'
+    success: '&aMeteorite ''%id%'' spawned successfully.'
+  reload:
+    success: '&aConfiguration and localization reloaded.'
+  start:
+    success: '&aRandom meteorites started.'
+  stop:
+    success: '&aRandom meteorites stopped.'
+  version:
+    info: '&eCustomMeteorites v%version% by n1xend'
+  unknown: '&cUnknown command.'
+  help:
+    header: '&e=== CustomMeteorites v2.0.0 ==='
+    spawn: '&e/meteor spawn <id> &7- spawn meteorite of specified type'
+    start: '&e/meteor start &7- start random meteorites'
+    stop: '&e/meteor stop &7- stop random meteorites'
+    reload: '&e/meteor reload &7- reload configuration'
+    version: '&e/meteor version &7- show plugin version'
