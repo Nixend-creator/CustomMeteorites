@@ -1,4 +1,4 @@
-# 🌠 CustomMeteorites v2.0.0
+# 🌠 CustomCoreMeteorites v2.0.0
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg?style=flat-square)](https://github.com/Nixend-creator/CustomMeteorites/releases)
 [![Platform](https://img.shields.io/badge/platform-Paper%201.21.1+-brightgreen.svg?style=flat-square)](https://papermc.io)
